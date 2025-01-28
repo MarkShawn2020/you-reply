@@ -156,7 +156,12 @@ export default function HomePage() {
               className="bg-white shadow-sm"
             />
 
-            <SectionCard icon={Bot} title="解析结果">
+
+          </div>
+
+          {/* 右侧：回复生成区域 */}
+          <div className="space-y-6">
+          <SectionCard icon={Bot} title="解析结果">
               {isAnalyzing ? (
                 <LoadingSkeleton progressText="正在解析图片..." />
               ) : (
@@ -168,10 +173,7 @@ export default function HomePage() {
                 />
               )}
             </SectionCard>
-          </div>
-
-          {/* 右侧：回复生成区域 */}
-          <div className="space-y-6">
+            
             <SectionCard icon={MessageCircle} title="生成的回复">
               {isGenerating ? (
                 <LoadingSkeleton

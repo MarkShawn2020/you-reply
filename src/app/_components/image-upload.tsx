@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import { Upload } from 'lucide-react';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 interface ImageUploadProps {
@@ -11,10 +11,24 @@ interface ImageUploadProps {
 }
 
 export function ImageUpload({ onImageUpload, className }: ImageUploadProps) {
+  const [preview, setPreview] = useState<string | null>(null);
+
+  const handleFile = (file: File) => {
+    // 创建预览
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // 调用上传回调
+    onImageUpload(file);
+  };
+
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
       if (acceptedFiles.length > 0) {
-        onImageUpload(acceptedFiles[0]);
+        handleFile(acceptedFiles[0]);
       }
     },
     [onImageUpload],
@@ -38,7 +52,7 @@ export function ImageUpload({ onImageUpload, className }: ImageUploadProps) {
         if (items[i].type.indexOf('image') !== -1) {
           const file = items[i].getAsFile();
           if (file) {
-            onImageUpload(file);
+            handleFile(file);
             break;
           }
         }
@@ -48,6 +62,37 @@ export function ImageUpload({ onImageUpload, className }: ImageUploadProps) {
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
   }, [onImageUpload]);
+
+  if (preview) {
+    return (
+      <div className={cn('relative rounded-lg border', className)}>
+        <img
+          src={preview}
+          alt="Preview"
+          className="h-auto w-full rounded-lg object-contain"
+        />
+        <button
+          onClick={() => setPreview(null)}
+          className="absolute right-2 top-2 rounded-full bg-white/80 p-2 text-gray-600 shadow-sm hover:bg-white hover:text-gray-900"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div
