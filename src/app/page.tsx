@@ -1,53 +1,108 @@
-import Link from "next/link";
+'use client';
 
-import { LatestPost } from "~/app/_components/post";
-import { api, HydrateClient } from "~/trpc/server";
+import { useState } from 'react';
+import { ImageUpload } from './_components/image-upload';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { analyzeImage, generateReply } from './actions';
+import { copyToClipboard } from '@/lib/utils';
 
-export default async function Home() {
-  const hello = await api.post.hello({ text: "from tRPC" });
+export default function HomePage() {
+  const [parsedText, setParsedText] = useState('');
+  const [generatedReply, setGeneratedReply] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  void api.post.getLatest.prefetch();
+  const handleImageUpload = async (file: File) => {
+    try {
+      const result = await analyzeImage(file);
+      setParsedText(result);
+    } catch (error) {
+      console.error('Failed to analyze image:', error);
+      alert('图片分析失败，请重试');
+    }
+  };
+
+  const handleGenerateReply = async () => {
+    if (!parsedText) {
+      alert('请先上传并解析图片');
+      return;
+    }
+
+    try {
+      setIsGenerating(true);
+      const reply = await generateReply(parsedText);
+      setGeneratedReply(reply);
+    } catch (error) {
+      console.error('Failed to generate reply:', error);
+      alert('生成回复失败，请重试');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleCopy = async () => {
+    if (!generatedReply) {
+      alert('请先生成回复');
+      return;
+    }
+
+    const success = await copyToClipboard(generatedReply);
+    if (success) {
+      alert('已复制到剪贴板');
+    } else {
+      alert('复制失败，请手动复制');
+    }
+  };
 
   return (
-    <HydrateClient>
-      <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-        <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-          <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
-            Create <span className="text-[hsl(280,100%,70%)]">T3</span> App
-          </h1>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
-            <Link
-              className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 hover:bg-white/20"
-              href="https://create.t3.gg/en/usage/first-steps"
-              target="_blank"
-            >
-              <h3 className="text-2xl font-bold">First Steps →</h3>
-              <div className="text-lg">
-                Just the basics - Everything you need to know to set up your
-                database and authentication.
-              </div>
-            </Link>
-            <Link
-              className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 hover:bg-white/20"
-              href="https://create.t3.gg/en/introduction"
-              target="_blank"
-            >
-              <h3 className="text-2xl font-bold">Documentation →</h3>
-              <div className="text-lg">
-                Learn more about Create T3 App, the libraries it uses, and how
-                to deploy it.
-              </div>
-            </Link>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-2xl text-white">
-              {hello ? hello.greeting : "Loading tRPC query..."}
-            </p>
-          </div>
-
-          <LatestPost />
+    <main className="container mx-auto p-4">
+      <h1 className="mb-8 text-center text-2xl font-bold">微信回复助手</h1>
+      
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* 左侧：上传和解析区域 */}
+        <div className="space-y-4">
+          <ImageUpload onImageUpload={handleImageUpload} />
+          
+          <Card className="p-4">
+            <h2 className="mb-2 text-lg font-semibold">解析结果</h2>
+            <Textarea
+              value={parsedText}
+              placeholder="等待图片解析..."
+              className="min-h-[200px]"
+              readOnly
+            />
+          </Card>
         </div>
-      </main>
-    </HydrateClient>
+
+        {/* 右侧：回复生成区域 */}
+        <div className="space-y-4">
+          <Card className="p-4">
+            <h2 className="mb-2 text-lg font-semibold">生成的回复</h2>
+            <Textarea
+              value={generatedReply}
+              placeholder="点击生成回复按钮开始生成..."
+              className="mb-4 min-h-[200px]"
+              readOnly
+            />
+            <div className="flex justify-end gap-2">
+              <Button 
+                variant="outline" 
+                onClick={handleCopy}
+                disabled={!generatedReply}
+              >
+                复制
+              </Button>
+              <Button
+                onClick={handleGenerateReply}
+                disabled={!parsedText || isGenerating}
+              >
+                {isGenerating ? '生成中...' : '生成回复'}
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </main>
   );
 }
