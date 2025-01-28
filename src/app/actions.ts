@@ -1,6 +1,7 @@
 'use server';
 
 import { callClaude, callClaudeWithImage } from '@/lib/claude';
+import { callDeepSeek } from '@/lib/deepseek';
 import { prisma } from '@/lib/prisma';
 import { IMAGE_ANALYSIS_PROMPT, REPLY_GENERATION_PROMPT } from '@/lib/prompts';
 
@@ -31,7 +32,8 @@ export async function generateReply(parsedText: string): Promise<any> {
         backgroundInfo ? backgroundInfo.content : '未提供补充背景信息',
       );
 
-    const result = await callClaude(prompt);
+    // 使用 DeepSeek API 生成回复
+    const result = await callDeepSeek(prompt);
     return result;
   } catch (error) {
     console.error('Error generating reply:', error);
