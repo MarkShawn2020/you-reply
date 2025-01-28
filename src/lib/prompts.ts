@@ -17,6 +17,7 @@ export const IMAGE_ANALYSIS_PROMPT = `
    - 保持原始文本的完整性
    - 无需标注具体发送时间（除非是系统时间消息）
    - 按照消息的原始显示顺序输出
+请以最简洁的方式呈现转换结果。
 `;
 
 export const REPLY_GENERATION_PROMPT = `
@@ -41,7 +42,14 @@ export const REPLY_GENERATION_PROMPT = `
    - 保持与原对话风格的一致性
 
 以下是聊天记录：
+\`\`\`
 {text}
+\`\`\`
 
-请基于以上规则，生成一个得体、自然的回复。
+如果提供了补充背景信息，请在生成回复时考虑这些信息：
+\`\`\`
+{background}
+\`\`\`
+
+请基于以上规则和背景信息，生成一个得体、自然的回复。
 `;

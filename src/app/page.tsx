@@ -1,10 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ImageUpload } from './_components/image-upload';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { analyzeImage, generateReply } from './actions';
+import {
+  analyzeImage,
+  generateReply,
+  getLatestBackgroundInfo,
+  saveBackgroundInfo,
+} from './actions';
 import { copyToClipboard } from '@/lib/utils';
 import { PageContainer } from './_components/page-container';
 import {
@@ -23,6 +28,7 @@ import { SectionCard } from './_components/section-card';
 import { getErrorMessage } from '@/lib/error';
 import { FeatureCard } from './_components/feature-card';
 import { HistoryDrawer } from './_components/history-drawer';
+import { BackgroundInfoDialog } from './_components/background-info-dialog';
 
 export default function HomePage() {
   const [parsedText, setParsedText] = useState('');
@@ -30,7 +36,23 @@ export default function HomePage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [backgroundInfo, setBackgroundInfo] = useState('');
   const { toast } = useToast();
+
+  // 加载最新的背景信息
+  useEffect(() => {
+    const loadBackgroundInfo = async () => {
+      try {
+        const info = await getLatestBackgroundInfo();
+        if (info) {
+          setBackgroundInfo(info.content);
+        }
+      } catch (error) {
+        console.error('Failed to load background info:', error);
+      }
+    };
+    void loadBackgroundInfo();
+  }, []);
 
   const handleImageUpload = async (file: File) => {
     try {
@@ -112,6 +134,16 @@ export default function HomePage() {
     }
   };
 
+  const handleSaveBackgroundInfo = async (content: string) => {
+    try {
+      await saveBackgroundInfo(content);
+      setBackgroundInfo(content);
+    } catch (error) {
+      console.error('Failed to save background info:', error);
+      throw error;
+    }
+  };
+
   return (
     <PageContainer>
       <div className="mx-auto max-w-5xl">
@@ -155,25 +187,36 @@ export default function HomePage() {
               onImageUpload={handleImageUpload}
               className="bg-white shadow-sm"
             />
-
-
           </div>
 
           {/* 右侧：回复生成区域 */}
           <div className="space-y-6">
-          <SectionCard icon={Bot} title="解析结果">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">生成设置</h2>
+              <BackgroundInfoDialog
+                initialContent={backgroundInfo}
+                onSave={handleSaveBackgroundInfo}
+              />
+            </div>
+
+            <SectionCard icon={Bot} title="解析结果">
               {isAnalyzing ? (
                 <LoadingSkeleton progressText="正在解析图片..." />
               ) : (
-                <Textarea
-                  value={parsedText}
-                  placeholder="等待图片解析..."
-                  className="min-h-[200px] resize-none"
-                  readOnly
-                />
+                <div className="space-y-3">
+                  <Textarea
+                    value={parsedText}
+                    onChange={(e) => setParsedText(e.target.value)}
+                    placeholder="等待图片解析..."
+                    className="min-h-[200px] resize-none"
+                  />
+                  <div className="text-sm text-gray-500">
+                    提示：可以编辑解析结果以修正或补充内容
+                  </div>
+                </div>
               )}
             </SectionCard>
-            
+
             <SectionCard icon={MessageCircle} title="生成的回复">
               {isGenerating ? (
                 <LoadingSkeleton

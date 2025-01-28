@@ -9,11 +9,15 @@ interface ClaudeResponse {
 /**
  * 调用 Claude API 进行图片分析
  */
-export async function callClaudeWithImage(
-  imageBuffer: Buffer,
-  mimeType: string,
-  prompt: string,
-) {
+export async function callClaudeWithImage(prompt: string, formData: FormData) {
+  const file = formData.get('file') as File;
+  if (!file) {
+    throw new Error('No file provided');
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const mimeType = file.type;
+
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -35,7 +39,7 @@ export async function callClaudeWithImage(
               source: {
                 type: 'base64',
                 media_type: mimeType,
-                data: imageBuffer.toString('base64'),
+                data: buffer.toString('base64'),
               },
             },
           ],
@@ -53,6 +57,9 @@ export async function callClaudeWithImage(
   }
 
   const data = (await response.json()) as ClaudeResponse;
+  if (!data.content?.[0]?.text) {
+    throw new Error('Invalid response from Claude API');
+  }
   return data.content[0].text;
 }
 
@@ -60,6 +67,8 @@ export async function callClaudeWithImage(
  * 调用 Claude API 进行文本生成
  */
 export async function callClaude(prompt: string) {
+  console.log('calling Claude with prompt:', prompt);
+
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -71,7 +80,12 @@ export async function callClaude(prompt: string) {
       messages: [
         {
           role: 'user',
-          content: prompt,
+          content: [
+            {
+              type: 'text',
+              text: prompt,
+            },
+          ],
         },
       ],
       model: 'claude-3-opus-20240229',
@@ -86,5 +100,8 @@ export async function callClaude(prompt: string) {
   }
 
   const data = (await response.json()) as ClaudeResponse;
+  if (!data.content?.[0]?.text) {
+    throw new Error('Invalid response from Claude API');
+  }
   return data.content[0].text;
 }

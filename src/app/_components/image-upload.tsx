@@ -27,41 +27,45 @@ export function ImageUpload({ onImageUpload, className }: ImageUploadProps) {
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
-      if (acceptedFiles.length > 0) {
-        handleFile(acceptedFiles[0]);
+      const file = acceptedFiles[0];
+      if (file) {
+        handleFile(file);
       }
     },
-    [onImageUpload],
+    [handleFile],
+  );
+
+  const handlePaste = useCallback(
+    (e: ClipboardEvent) => {
+      const { items } = e.clipboardData || new DataTransfer();
+      if (!items) return;
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item && item.type.indexOf('image') !== -1) {
+          const file = item.getAsFile();
+          if (file) {
+            handleFile(file);
+          }
+          break;
+        }
+      }
+    },
+    [handleFile],
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/*': ['.png', '.jpg', '.jpeg'],
+      'image/*': [],
     },
     maxFiles: 1,
-    multiple: false,
   });
 
   useEffect(() => {
-    const handlePaste = (e: ClipboardEvent) => {
-      const items = e.clipboardData?.items;
-      if (!items) return;
-
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf('image') !== -1) {
-          const file = items[i].getAsFile();
-          if (file) {
-            handleFile(file);
-            break;
-          }
-        }
-      }
-    };
-
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
-  }, [onImageUpload]);
+  }, [handlePaste]);
 
   if (preview) {
     return (
