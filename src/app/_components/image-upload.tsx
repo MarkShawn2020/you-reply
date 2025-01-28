@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import { Upload } from 'lucide-react';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 interface ImageUploadProps {
@@ -28,6 +28,26 @@ export function ImageUpload({ onImageUpload, className }: ImageUploadProps) {
     maxFiles: 1,
     multiple: false,
   });
+
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const file = items[i].getAsFile();
+          if (file) {
+            onImageUpload(file);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [onImageUpload]);
 
   return (
     <div
@@ -58,7 +78,7 @@ export function ImageUpload({ onImageUpload, className }: ImageUploadProps) {
 
       <div>
         <p className="text-base font-medium text-gray-700">
-          {isDragActive ? '松开鼠标上传图片' : '点击或拖拽上传图片'}
+          {isDragActive ? '松开鼠标上传图片' : '点击、拖拽或粘贴上传图片'}
         </p>
         <p className="mt-1 text-sm text-gray-500">支持 PNG、JPG、JPEG 格式</p>
       </div>
