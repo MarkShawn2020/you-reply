@@ -33,12 +33,15 @@ import { PromptEditorDialog } from './_components/prompt-editor-dialog';
 import { useAtom } from 'jotai';
 import { imagePromptAtom, replyPromptAtom } from '@/store/prompts';
 import { atomWithStorage } from 'jotai/utils';
+import { useCompletion } from 'ai/react';
 
 const promptEditorOpenAtom = atomWithStorage('promptEditorOpen', false);
 
 export default function HomePage() {
   const [parsedText, setParsedText] = useState('');
   const [generatedReply, setGeneratedReply] = useState('');
+  const [deepseekReply, setDeepseekReply] = useState('');
+  const [claudeReply, setClaudeReply] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,6 +85,38 @@ export default function HomePage() {
     };
     void loadBackgroundInfo();
   }, []);
+
+  // Add Vercel AI hooks for both models
+  const {
+    completion: deepseekCompletion,
+    complete: completeDeepseek,
+    isLoading: isDeepseekLoading,
+  } = useCompletion({
+    api: '/api/completion/deepseek',
+  });
+
+  const {
+    completion: claudeCompletion,
+    complete: completeClaude,
+    isLoading: isClaudeLoading,
+  } = useCompletion({
+    api: '/api/completion/claude',
+  });
+
+  // Update effect to sync completions
+  useEffect(() => {
+    if (deepseekCompletion) {
+      setDeepseekReply(deepseekCompletion);
+    }
+  }, [deepseekCompletion]);
+
+  useEffect(() => {
+    if (claudeCompletion) {
+      setClaudeReply(claudeCompletion);
+    }
+  }, [claudeCompletion]);
+
+  console.log({deepseekCompletion});
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -259,23 +294,44 @@ export default function HomePage() {
                       <LoadingSkeleton />
                     ) : (
                       <div className="space-y-4">
-                        <Textarea
-                          value={generatedReply}
-                          onChange={(e) => setGeneratedReply(e.target.value)}
-                          className="h-32"
-                          placeholder="点击下方按钮生成回复..."
-                        />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Deepseek Response */}
+                          <div className="space-y-2">
+                            <h4 className="text-sm font-medium text-gray-700">Deepseek 回复</h4>
+                            <Textarea
+                              value={deepseekReply}
+                              onChange={(e) => setDeepseekReply(e.target.value)}
+                              className="h-32"
+                              placeholder="Deepseek 生成的回复..."
+                              readOnly
+                            />
+                          </div>
+                          {/* Claude Response */}
+                          <div className="space-y-2">
+                            <h4 className="text-sm font-medium text-gray-700">Claude 回复</h4>
+                            <Textarea
+                              value={claudeReply}
+                              onChange={(e) => setClaudeReply(e.target.value)}
+                              className="h-32"
+                              placeholder="Claude 生成的回复..."
+                              readOnly
+                            />
+                          </div>
+                        </div>
                         <div className="flex gap-2">
                           <Button
                             className="flex-1 bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600"
-                            disabled={isGenerating}
+                            disabled={isDeepseekLoading || isClaudeLoading}
                             onClick={async () => {
                               if (!sessionId) return;
                               setError(null);
                               setIsGenerating(true);
                               try {
-                                const reply = await generateReply(parsedText, sessionId, replyPrompt);
-                                setGeneratedReply(reply);
+                                // 并行发起请求
+                                await Promise.all([
+                                  completeDeepseek(parsedText),
+                                  completeClaude(parsedText)
+                                ]);
                               } catch (e) {
                                 setError(getErrorMessage(e));
                               } finally {
@@ -283,23 +339,25 @@ export default function HomePage() {
                               }
                             }}
                           >
-                            {isGenerating ? '生成中...' : '生成回复'}
+                            {isDeepseekLoading || isClaudeLoading ? '生成中...' : '生成回复'}
                           </Button>
                           <Button
                             variant="outline"
                             className="gap-2"
                             onClick={() => {
-                              void copyToClipboard(generatedReply)
-                              .then(() => {
-                                toast({
-                                  title: '已复制到剪贴板',
-                                  duration: 2000,
+                              // 复制选中的回复
+                              const selectedReply = deepseekReply || claudeReply;
+                              void copyToClipboard(selectedReply)
+                                .then(() => {
+                                  toast({
+                                    title: '已复制到剪贴板',
+                                    duration: 2000,
+                                  });
                                 });
-                              })
                             }}
                           >
                             <Copy className="h-4 w-4" />
-                            <span>复制</span>
+                            复制
                           </Button>
                         </div>
                       </div>
