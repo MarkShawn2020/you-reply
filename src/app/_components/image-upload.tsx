@@ -7,27 +7,32 @@ import { useDropzone } from 'react-dropzone';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { processImageWithDify, uploadImageToDify } from '../actions';
 
 interface ImageUploadProps {
-  onImageUpload: (file: File) => void;
+  /** User ID for tracking */
+  userId: string;
   className?: string;
   error?: string | null;
   isAnalyzing?: boolean;
-  /** 每张图片对应的对话内容 */
-  conversations?: { [key: string]: string };
-  /** 识别结果变化时的回调 */
-  onResultChange?: (result: string) => void;
+  /** Streaming results */
+  onStreamResult?: (result: string) => void;
+  /** Final result callback */
+  onFinalResult?: (result: string) => void;
 }
 
 export function ImageUpload({ 
-  onImageUpload, 
+  userId,
   className = '', 
-  error, 
-  isAnalyzing,
-  conversations = {},
-  onResultChange
+  error: propError, 
+  isAnalyzing: propIsAnalyzing,
+  onStreamResult,
+  onFinalResult,
 }: ImageUploadProps) {
   const [images, setImages] = useState<{ file: File; preview: string }[]>([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [streamingResult, setStreamingResult] = useState<string>('');
 
   const createPreview = useCallback((file: File): { file: File; preview: string } => {
     return {
@@ -44,17 +49,105 @@ export function ImageUpload({
     return () => cleanupPreviews();
   }, [cleanupPreviews]);
 
+  const processImage = async (file: File) => {
+    try {
+      // 1. Upload file to Dify
+      const fileId = await uploadImageToDify(file, userId);
+
+      // 2. Process with Dify workflow
+      const stream = await processImageWithDify(fileId, userId);
+      const reader = stream.getReader();
+      const decoder = new TextDecoder();
+      
+      let buffer = ''; // 用于存储未完成的数据
+      let result = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        // 将新的数据添加到缓冲区
+        buffer += decoder.decode(value, { stream: true });
+        
+        // 处理完整的 SSE 消息
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // 保留最后一个可能不完整的行
+
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
+
+          try {
+            const jsonStr = trimmedLine.slice(6);
+            const eventData = JSON.parse(jsonStr);
+            
+            if (eventData.event === 'workflow_finished') {
+              if (eventData.data.status === 'succeeded') {
+                onFinalResult?.(result);
+              } else {
+                throw new Error(eventData.data.error || 'Workflow failed');
+              }
+            } else if (eventData.event === 'node_finished' && eventData.data.outputs?.text) {
+              result = eventData.data.outputs.text;
+              setStreamingResult(result);
+              onStreamResult?.(result);
+            }
+          } catch (parseError) {
+            console.error('Error parsing SSE message:', parseError, '\nLine:', trimmedLine);
+            continue; // 跳过这一行，继续处理下一行
+          }
+        }
+      }
+
+      // 处理剩余的缓冲区数据
+      if (buffer.trim()) {
+        try {
+          const trimmedLine = buffer.trim();
+          if (trimmedLine.startsWith('data: ')) {
+            const jsonStr = trimmedLine.slice(6);
+            const eventData = JSON.parse(jsonStr);
+            
+            if (eventData.event === 'workflow_finished') {
+              if (eventData.data.status === 'succeeded') {
+                onFinalResult?.(result);
+              } else {
+                throw new Error(eventData.data.error || 'Workflow failed');
+              }
+            }
+          }
+        } catch (parseError) {
+          console.error('Error parsing final SSE message:', parseError);
+        }
+      }
+
+    } catch (err) {
+      console.error('Processing error:', err);
+      throw new Error(err instanceof Error ? err.message : 'Failed to process image');
+    }
+  };
+
   const handleFiles = useCallback(
-    (files: File[]) => {
+    async (files: File[]) => {
+      if (files.length === 0) return;
+      
       cleanupPreviews();
       const newImages = files.map(createPreview);
       setImages(newImages);
-
-      if (files.length > 0) {
-        onImageUpload(files[files.length - 1]!);
+      
+      const file = files[files.length - 1]!;
+      setIsAnalyzing(true);
+      setError(null);
+      setStreamingResult('');
+      
+      try {
+        await processImage(file);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to process image');
+      } finally {
+        setIsAnalyzing(false);
       }
     },
-    [cleanupPreviews, createPreview, onImageUpload],
+    [userId, cleanupPreviews, createPreview, onStreamResult, onFinalResult],
   );
 
   const onDrop = useCallback(
@@ -74,9 +167,9 @@ export function ImageUpload({
 
   const handleRetry = useCallback(() => {
     if (images.length > 0) {
-      onImageUpload(images[images.length - 1]!.file);
+      handleFiles([images[0].file]);
     }
-  }, [images, onImageUpload]);
+  }, [images, handleFiles]);
 
   const removeImage = useCallback(
     (index: number) => {
@@ -219,17 +312,13 @@ export function ImageUpload({
                     重新尝试
                   </Button>
                 </div>
-              ) : conversations.result ? (
-                <Textarea
-                  value={conversations.result}
-                  onChange={(e) => onResultChange?.(e.target.value)}
-                  className="flex-1 resize-none"
-                  placeholder="等待识别结果..."
-                />
               ) : (
-                <div className="h-full flex items-center justify-center text-sm text-gray-500">
-                  {isAnalyzing ? '正在解析图片...' : '等待解析图片...'}
-                </div>
+                <Textarea
+                  value={streamingResult}
+                  readOnly
+                  className="flex-1 resize-none"
+                  placeholder={isAnalyzing ? '正在解析图片...' : '等待解析图片...'}
+                />
               )}
             </div>
           </div>

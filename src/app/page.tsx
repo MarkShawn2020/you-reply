@@ -218,36 +218,28 @@ export default function HomePage() {
             >
               <div className="space-y-4">
                 <ImageUpload
-                  onImageUpload={async (file: File) => {
-                    setError(null);
-                    setIsAnalyzing(true);
-                    setParsedText('');
-                    setGeneratedReply('');
-
-                    try {
-                      const result = await analyzeImage(file, imagePrompt);
-                      setParsedText(result);
-                      setSessionId(crypto.randomUUID());
-                      
-                      // Save chat context
-                      await saveChatContext(sessionId, '', '');
-                      
-                      // Save background info if not already set
-                      if (backgroundInfo) {
-                        void saveBackgroundInfo(backgroundInfo);
-                      }
-                    } catch (e) {
-                      setError(getErrorMessage(e));
-                    } finally {
-                      setIsAnalyzing(false);
-                    }
-                  }}
+                  userId={sessionId}
                   isAnalyzing={isAnalyzing}
                   error={error}
-                  conversations={{
-                    result: parsedText
+                  onStreamResult={(result) => {
+                    setParsedText(result);
                   }}
-                  onResultChange={setParsedText}
+                  onFinalResult={async (result) => {
+                    setParsedText(result);
+                    
+                    // Save chat context
+                    await saveChatContext(sessionId, result, '');
+                    
+                    // Save background info if not already set
+                    if (backgroundInfo) {
+                      void saveBackgroundInfo(backgroundInfo);
+                    }
+
+                    toast({
+                      title: '图片解析完成',
+                      duration: 2000,
+                    });
+                  }}
                 />
               </div>
             </SectionCard>

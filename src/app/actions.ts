@@ -125,3 +125,109 @@ export async function getLatestChatContext(sessionId: string): Promise<ChatConte
     throw new Error('获取聊天对象信息失败');
   }
 }
+
+export async function uploadImageToDify(
+  file: File,
+  userId: string,
+): Promise<string> {
+  console.log(`[Dify] Uploading image for user ${userId}`, {
+    fileName: file.name,
+    fileSize: file.size,
+    fileType: file.type,
+  });
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('user', userId);
+
+  try {
+    const response = await fetch('https://api.dify.ai/v1/files/upload', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.DIFY_API_KEY}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[Dify] File upload failed', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText,
+      });
+      throw new Error('Failed to upload file to Dify');
+    }
+
+    const data = await response.json();
+    console.log('[Dify] File upload successful', {
+      fileId: data.id,
+      userId,
+    });
+    return data.id;
+  } catch (error) {
+    console.error('[Dify] File upload error', {
+      error: error instanceof Error ? error.message : error,
+      userId,
+      fileName: file.name,
+    });
+    throw error;
+  }
+}
+
+export async function processImageWithDify(
+  fileId: string,
+  userId: string,
+): Promise<ReadableStream> {
+  console.log('[Dify] Starting image processing', {
+    fileId,
+    userId,
+  });
+
+  try {
+    const response = await fetch('https://api.dify.ai/v1/workflows/run', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.DIFY_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        inputs:{},
+          files: [{
+            transfer_method: 'local_file',
+            upload_file_id: fileId,
+            type: 'image'
+          }],
+        response_mode: 'streaming',
+        user: userId,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[Dify] Image processing request failed', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText,
+        fileId,
+        userId,
+      });
+      throw new Error('Failed to process image with Dify');
+    }
+
+    console.log('[Dify] Image processing started successfully', {
+      fileId,
+      userId,
+    });
+
+    // @ts-ignore - ReadableStream is available in Node.js
+    return response.body;
+  } catch (error) {
+    console.error('[Dify] Image processing error', {
+      error: error instanceof Error ? error.message : error,
+      fileId,
+      userId,
+    });
+    throw error;
+  }
+}
