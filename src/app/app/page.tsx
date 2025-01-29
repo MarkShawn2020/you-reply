@@ -17,7 +17,7 @@ import { useAtom } from "jotai";
 import { ClaudeChat } from "~/components/claude-chat";
 import { SectionCard } from "~/components/section-card";
 import { Button } from "~/components/ui/button";
-import { Pen, Settings, Upload } from "lucide-react";
+import { Pen, Settings, Upload, Trash2, MoreVertical } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -26,6 +26,12 @@ import {
   SelectValue,
   SelectSeparator,
 } from "~/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import { atomWithStorage } from "jotai/utils";
 import {
   getLatestBackgroundInfo,
@@ -38,9 +44,10 @@ const promptEditorOpenAtom = atomWithStorage("promptEditorOpen", false);
 
 const defaultScenarios = [
   { id: "spring-festival", label: "春节拜年" },
-  { id: "work", label: "工作汇报" },
-  { id: "social", label: "社交聊天" },
-  { id: "customer", label: "客户服务" },
+  { id: "work", label: "回复领导" },
+  { id: "customer", label: "回复客户" },
+  { id: "social", label: "社交聊天"   },
+  { id: "social", label: "分手挽回" },
   { id: "new", label: "新建场景" },
 ];
 
@@ -100,6 +107,15 @@ export default function AppPage() {
     },
     [setCustomScenarios],
   );
+
+  // 删除场景
+  const handleDeleteScenario = useCallback((scenarioId: string) => {
+    setCustomScenarios((prev) => prev.filter((s) => s.id !== scenarioId));
+    toast({
+      title: "场景已删除",
+      duration: 2000,
+    });
+  }, [setCustomScenarios, toast]);
 
   const genReplyPrompt = `
   这是一段微信聊天记录上下文：
@@ -190,17 +206,42 @@ export default function AppPage() {
                           </SelectItem>
                         </div>
                       ) : (
-                        <SelectItem
-                          key={scenario.id}
-                          value={scenario.label}
-                          className={
-                            scenario.id.startsWith("custom_")
-                              ? "text-primary"
-                              : ""
-                          }
-                        >
-                          {scenario.label}
-                        </SelectItem>
+                        <div key={scenario.id} className="relative">
+                          <SelectItem
+                            value={scenario.label}
+                            className={
+                              scenario.id.startsWith("custom_")
+                                ? "text-primary pr-8"
+                                : ""
+                            }
+                          >
+                            {scenario.label}
+                          </SelectItem>
+                          {scenario.id.startsWith("custom_") && (
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 p-0 hover:bg-muted"
+                                  >
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                  <DropdownMenuItem
+                                    className="text-destructive focus:text-destructive"
+                                    onClick={() => handleDeleteScenario(scenario.id)}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    删除场景
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          )}
+                        </div>
                       ),
                     )}
                   </SelectContent>
