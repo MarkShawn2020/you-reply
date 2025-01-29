@@ -7,7 +7,7 @@ import { useDropzone } from 'react-dropzone';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { processImageWithDify, uploadImageToDify } from '@/app/actions';
+import { OCRResponse, groupTextsByPosition, processImageWithOCR } from '@/services/ocr';
 
 interface ImageUploadProps {
   /** User ID for tracking */
@@ -36,6 +36,7 @@ export function ImageUpload({
   const [retryCount, setRetryCount] = useState<number>(0);
   const [maxRetries, setMaxRetries] = useState<number>(3);
   const [selectedFile, setSelectedFile] = useState<{ file: File; preview: string } | null>(null);
+  const [ocrResults, setOcrResults] = useState<OCRResponse | null>(null);
 
   const createPreview = useCallback((file: File): { file: File; preview: string } => {
     return {
@@ -54,78 +55,57 @@ export function ImageUpload({
 
   const processImage = async (file: File) => {
     try {
-      // 1. Upload file to Dify
-      const fileId = await uploadImageToDify(file, userId);
-
-      // 2. Process with Dify workflow
-      const stream = await processImageWithDify(fileId, userId);
-      const reader = stream.getReader();
-      const decoder = new TextDecoder();
+      setIsAnalyzing(true);
+      setError(null);
       
-      let buffer = ''; // 用于存储未完成的数据
-      let result = '';
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      console.log('Processing image:', file.name);
+      const response = await fetch('/api/ocr', {
+        method: 'POST',
+        body: formData,
+      });
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        // 将新的数据添加到缓冲区
-        buffer += decoder.decode(value, { stream: true });
-        
-        // 处理完整的 SSE 消息
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || ''; // 保留最后一个可能不完整的行
-
-        for (const line of lines) {
-          const trimmedLine = line.trim();
-          if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
-
-          try {
-            const jsonStr = trimmedLine.slice(6);
-            const eventData = JSON.parse(jsonStr);
-            
-            if (eventData.event === 'workflow_finished') {
-              if (eventData.data.status === 'succeeded') {
-                onFinalResult?.(result);
-              } else {
-                throw new Error(eventData.data.error || 'Workflow failed');
-              }
-            } else if (eventData.event === 'node_finished' && eventData.data.outputs?.text) {
-              result = eventData.data.outputs.text;
-              setStreamingResult(result);
-              onStreamResult?.(result);
-            }
-          } catch (parseError) {
-            console.error('Error parsing SSE message:', parseError, '\nLine:', trimmedLine);
-            continue; // 跳过这一行，继续处理下一行
-          }
-        }
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to process image');
       }
 
-      // 处理剩余的缓冲区数据
-      if (buffer.trim()) {
-        try {
-          const trimmedLine = buffer.trim();
-          if (trimmedLine.startsWith('data: ')) {
-            const jsonStr = trimmedLine.slice(6);
-            const eventData = JSON.parse(jsonStr);
-            
-            if (eventData.event === 'workflow_finished') {
-              if (eventData.data.status === 'succeeded') {
-                onFinalResult?.(result);
-              } else {
-                throw new Error(eventData.data.error || 'Workflow failed');
-              }
-            }
+      const data: OCRResponse = await response.json();
+      console.log('OCR Results:', data);
+      setOcrResults(data);
+      
+      const groupedTexts = groupTextsByPosition(data.words_result);
+      
+      // 将分组后的文本组合成最终结果
+      const result = groupedTexts
+        .reduce((acc, curr) => {
+          if (!acc[curr.group]) {
+            acc[curr.group] = [];
           }
-        } catch (parseError) {
-          console.error('Error parsing final SSE message:', parseError);
-        }
-      }
+          acc[curr.group]!.push(curr.text);
+          return acc;
+        }, {} as Record<number, string[]>);
 
-    } catch (err) {
-      console.error('Processing error:', err);
-      throw new Error(err instanceof Error ? err.message : 'Failed to process image');
+      // 将每个组的文本合并，并用换行符分隔不同组
+      const finalResult = Object.values(result)
+        .map(group => group.join(' '))
+        .join('\n');
+
+      setStreamingResult(finalResult);
+      onStreamResult?.(finalResult);
+      onFinalResult?.(finalResult);
+    } catch (error) {
+      console.error('Error processing image:', error);
+      setError(error instanceof Error ? error.message : 'Failed to process image');
+      
+      if (retryCount < maxRetries) {
+        setRetryCount(prev => prev + 1);
+        await processImage(file);
+      }
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -136,7 +116,7 @@ export function ImageUpload({
       cleanupPreviews();
       const newImages = files.map(createPreview);
       setImages(newImages);
-      setSelectedFile(newImages[0]);
+      setSelectedFile(newImages[0]!);
       
       const file = files[files.length - 1]!;
       setIsAnalyzing(true);
@@ -152,7 +132,7 @@ export function ImageUpload({
         setIsAnalyzing(false);
       }
     },
-    [userId, cleanupPreviews, createPreview, onStreamResult, onFinalResult],
+    [cleanupPreviews, createPreview, onStreamResult, onFinalResult],
   );
 
   const onDrop = useCallback(
@@ -219,6 +199,97 @@ export function ImageUpload({
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
   }, [handleFiles, isAnalyzing]);
+
+  const renderOCRBoxes = useCallback((canvas: HTMLCanvasElement | null) => {
+    if (!canvas || !selectedFile || !ocrResults) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    console.log('Rendering OCR boxes:', {
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+      results: ocrResults.words_result.length
+    });
+
+    // 清除画布
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 获取图片实际显示尺寸
+    const img = document.getElementById('preview-image') as HTMLImageElement;
+    if (!img || !img.complete) {
+      console.log('Image not ready');
+      return;
+    }
+
+    console.log('Image dimensions:', {
+      naturalWidth: img.naturalWidth,
+      naturalHeight: img.naturalHeight,
+      displayWidth: img.width,
+      displayHeight: img.height
+    });
+
+    const scale = img.width / img.naturalWidth;
+    
+    // 设置样式
+    ctx.strokeStyle = 'red'; // 改为红色以便更容易看到
+    ctx.lineWidth = 2;
+    ctx.font = '16px Arial';
+    
+    // 绘制矩形框和组号
+    ocrResults.words_result.forEach((result, index) => {
+      const { left, top, width, height } = result.location;
+      
+      // 缩放坐标和尺寸
+      const scaledLeft = left * scale;
+      const scaledTop = top * scale;
+      const scaledWidth = width * scale;
+      const scaledHeight = height * scale;
+      
+      console.log(`Drawing box ${index}:`, {
+        original: { left, top, width, height },
+        scaled: { scaledLeft, scaledTop, scaledWidth, scaledHeight }
+      });
+      
+      // 绘制半透明填充
+      ctx.fillStyle = `rgba(255, 0, 0, 0.2)`; // 改为红色半透明
+      // ctx.fillRect(scaledLeft, scaledTop, scaledWidth, scaledHeight);
+      
+      // 绘制边框
+      ctx.strokeRect(scaledLeft, scaledTop, scaledWidth, scaledHeight);
+      
+      // 无需绘制文本
+      // ctx.fillStyle = 'red';
+      // ctx.fillText(
+      //   `${result.text} (${Math.round(result.probability * 100)}%)`,
+      //   scaledLeft,
+      //   scaledTop - 5
+      // );
+    });
+  }, [selectedFile, ocrResults]);
+
+  useEffect(() => {
+    const img = document.getElementById('preview-image') as HTMLImageElement;
+    if (img) {
+      const handleLoad = () => {
+        console.log('Image loaded');
+        const canvas = document.getElementById('ocr-canvas') as HTMLCanvasElement;
+        if (canvas) {
+          // 设置Canvas尺寸与图片显示尺寸相同
+          canvas.width = img.width;
+          canvas.height = img.height;
+          renderOCRBoxes(canvas);
+        }
+      };
+      
+      if (img.complete) {
+        handleLoad();
+      } else {
+        img.addEventListener('load', handleLoad);
+        return () => img.removeEventListener('load', handleLoad);
+      }
+    }
+  }, [renderOCRBoxes]);
 
   return (
     <div className={cn('space-y-4', className)}>
@@ -326,6 +397,33 @@ export function ImageUpload({
           </div>
         )}
       </div>
+      {selectedFile && (
+        <div className="relative mt-4 rounded-lg overflow-hidden">
+          <Image
+            id="preview-image"
+            src={selectedFile.preview}
+            alt="Preview"
+            width={800}
+            height={600}
+            className="w-full h-auto object-contain"
+            onLoad={(e) => {
+              console.log('Image onLoad event');
+              const canvas = document.getElementById('ocr-canvas') as HTMLCanvasElement;
+              if (canvas) {
+                const img = e.target as HTMLImageElement;
+                canvas.width = img.width;
+                canvas.height = img.height;
+                renderOCRBoxes(canvas);
+              }
+            }}
+          />
+          <canvas
+            id="ocr-canvas"
+            className="absolute top-0 left-0 w-full h-full pointer-events-none"
+            style={{ border: '1px solid blue' }} 
+          />
+        </div>
+      )}
     </div>
   );
 }
