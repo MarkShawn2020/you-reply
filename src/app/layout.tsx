@@ -44,7 +44,7 @@ export default function RootLayout({
                   <span className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-900 bg-clip-text text-transparent">
                     微信回复助手
                   </span>
-                  <Badge variant={"secondary"}>AI 超级川</Badge>
+                  <Badge className={'hidden xs:block'} variant={"secondary"}>AI 超级川</Badge>
                 </Link>
                 <nav className="hidden md:flex items-center space-x-6">
                   {!isAppPage ? (
@@ -61,7 +61,7 @@ export default function RootLayout({
                   <HistoryDrawer>
                     <Button variant="outline" size="sm" className="gap-2">
                       <History className="h-4 w-4" />
-                      <span>历史记录</span>
+                      <span className='hidden xs:block'>历史记录</span>
                     </Button>
                   </HistoryDrawer>
 
