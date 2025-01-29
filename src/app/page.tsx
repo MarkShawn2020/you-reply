@@ -20,12 +20,15 @@ import { Button } from "~/components/ui/button";
 import { useAtom } from "jotai/react";
 import { DeepseekChat } from "~/components/deepseek-chat";
 import { ClaudeChat } from "~/components/claude-chat";
+import { SectionCard } from "~/components/section-card";
+import { Pen } from "lucide-react";
 
 const promptEditorOpenAtom = atomWithStorage("promptEditorOpen", false);
 
 export default function HomePage() {
   const [parsedText, setParsedText] = useState("");
   const [background, setBackground] = useState("");
+  const [style, setStyle] = useState("");
   const [sessionId, setSessionId] = useState("");
   const [imagePrompt, setImagePrompt] = useAtom(imagePromptAtom);
   const [replyPrompt, setReplyPrompt] = useAtom(replyPromptAtom);
@@ -36,17 +39,17 @@ export default function HomePage() {
   const genReplyPrompt = `
   这是一段微信聊天记录上下文：
   <context>
-  {{parsedText}}
+  ${parsedText}
   </context>
   
   场景是：
     <background>
-  {{background}}
+  ${background}
     </background>
   
   用户聊天风格：
     <style>
-  {{style}}
+  ${style}
     </style>
   
   请代替真人回复，要求：
@@ -171,10 +174,17 @@ export default function HomePage() {
             />
 
             {/* Step 3: Generate Reply */}
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <SectionCard
+      icon={Pen}
+      title="步骤 3: 生成智能回复"
+      className="bg-white shadow-lg"
+    >
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <DeepseekChat prompt={genReplyPrompt} />
               <ClaudeChat prompt={genReplyPrompt} />
             </div>
+      </SectionCard>
+
           </div>
         </div>
       </section>

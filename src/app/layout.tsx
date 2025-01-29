@@ -1,11 +1,16 @@
+
+
 import { cn } from '@/lib/utils';
 import type { Metadata } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import '~/styles/globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Button } from '@/components/ui/button';
-import { Github, MessageCircle } from 'lucide-react';
+import { Github, MessageCircle, Tag } from 'lucide-react';
 import Link from 'next/link';
+import { Label } from '~/components/ui/label';
+import { Badge } from '~/components/ui/badge';
+
 
 export const metadata: Metadata = {
   title: '微信回复助手 - 智能生成合适的回复',
@@ -37,8 +42,9 @@ export default function RootLayout({
                     <MessageCircle className="h-5 w-5" />
                   </div>
                   <span className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-900 bg-clip-text text-transparent">
-                    智能回复
+                    微信智能回复
                   </span>
+                  <Badge variant={"secondary"}>CS 魔法社</Badge>
                 </Link>
                 <nav className="hidden md:flex items-center space-x-6">
                   <Link href="#features" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">功能特点</Link>
