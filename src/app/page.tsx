@@ -22,6 +22,8 @@ import { DeepseekChat } from "~/components/deepseek-chat";
 import { ClaudeChat } from "~/components/claude-chat";
 import { SectionCard } from "~/components/section-card";
 import { Pen } from "lucide-react";
+import PricingSection from "~/components/pricing-section";
+import DonationSection from "~/components/donation-section";
 
 const promptEditorOpenAtom = atomWithStorage("promptEditorOpen", false);
 
@@ -107,6 +109,12 @@ export default function HomePage() {
       <section id="features">
         <FeaturedSection />
       </section>
+
+      {/* Pricing Section */}
+      <PricingSection />
+
+      {/* Donation Section */}
+      <DonationSection />
 
       {/* Main Application Section */}
       <section id="upload" className="bg-gray-50 py-12">
