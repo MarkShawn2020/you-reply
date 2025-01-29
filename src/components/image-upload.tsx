@@ -7,7 +7,7 @@ import { useDropzone } from 'react-dropzone';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { processImageWithDify, uploadImageToDify } from '../actions';
+import { processImageWithDify, uploadImageToDify } from '@/app/actions';
 
 interface ImageUploadProps {
   /** User ID for tracking */
