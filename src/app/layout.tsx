@@ -106,7 +106,7 @@ export default function RootLayout({
                       <MessageCircle className="h-4 w-4" />
                       <span>@AI超级川</span>
                     </button>
-                    <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block">
+                    <div className="absolute bottom-full right-1/3 mb-2 hidden group-hover:block">
                       <div className="bg-white p-4 rounded-lg shadow-lg border">
                         <div className="w-[320px]">
                           <img
