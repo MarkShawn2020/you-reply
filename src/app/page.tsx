@@ -244,21 +244,11 @@ export default function HomePage() {
                   }}
                   isAnalyzing={isAnalyzing}
                   error={error}
+                  conversations={{
+                    result: parsedText
+                  }}
+                  onResultChange={setParsedText}
                 />
-
-                {/* Analysis Results */}
-                {isAnalyzing ? (
-                  <LoadingSkeleton />
-                ) : parsedText ? (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-gray-700">识别结果预览</h3>
-                    <Textarea
-                      value={parsedText}
-                      onChange={(e) => setParsedText(e.target.value)}
-                      className="min-h-[100px]"
-                    />
-                  </div>
-                ) : null}
               </div>
             </SectionCard>
 

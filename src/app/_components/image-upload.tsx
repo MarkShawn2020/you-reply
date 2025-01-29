@@ -6,15 +6,27 @@ import { useCallback, useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 
 interface ImageUploadProps {
   onImageUpload: (file: File) => void;
   className?: string;
   error?: string | null;
   isAnalyzing?: boolean;
+  /** 每张图片对应的对话内容 */
+  conversations?: { [key: string]: string };
+  /** 识别结果变化时的回调 */
+  onResultChange?: (result: string) => void;
 }
 
-export function ImageUpload({ onImageUpload, className = '', error, isAnalyzing }: ImageUploadProps) {
+export function ImageUpload({ 
+  onImageUpload, 
+  className = '', 
+  error, 
+  isAnalyzing,
+  conversations = {},
+  onResultChange
+}: ImageUploadProps) {
   const [images, setImages] = useState<{ file: File; preview: string }[]>([]);
 
   const createPreview = useCallback((file: File): { file: File; preview: string } => {
@@ -101,100 +113,128 @@ export function ImageUpload({ onImageUpload, className = '', error, isAnalyzing 
 
   return (
     <div className={cn('space-y-4', className)}>
-      <div
-        {...getRootProps()}
-        className={cn(
-          'group relative flex cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed p-8 text-center transition-colors',
-          isDragActive
-            ? 'border-primary/50 bg-primary/5'
-            : error
-            ? 'border-red-200 bg-red-50/50'
-            : 'border-gray-200 hover:border-primary/30 hover:bg-gray-50/50',
-          isAnalyzing && 'cursor-not-allowed opacity-60',
-        )}
-      >
-        <input {...getInputProps()} />
-
+      <div className="flex gap-4">
+        {/* 上传区域 */}
         <div
+          {...getRootProps()}
           className={cn(
-            'rounded-full p-4 transition-colors',
-            error
-              ? 'bg-red-100/80 group-hover:bg-red-200/60'
-              : 'bg-gray-100/80 group-hover:bg-primary/10',
-            isDragActive && 'bg-primary/10',
+            'group relative transition-colors w-[200px] shrink-0',
+            isDragActive
+              ? 'border-primary/50 bg-primary/5'
+              : error
+              ? 'border-red-200 bg-red-50/50'
+              : 'border-gray-200 hover:border-primary/30 hover:bg-gray-50/50',
+            isAnalyzing && 'cursor-not-allowed opacity-60',
+            'rounded-lg border-2',
+            images.length === 0 && 'h-[200px]'
           )}
         >
-          {error ? (
-            <AlertCircle className={cn('h-6 w-6 text-red-500')} />
-          ) : (
-            <Upload
-              className={cn(
-                'h-6 w-6 text-gray-400 transition-colors group-hover:text-primary',
-                isDragActive && 'text-primary',
-              )}
-            />
-          )}
-        </div>
+          <input {...getInputProps()} />
+          {images.length === 0 ? (
+            <div className="h-full flex cursor-pointer flex-col items-center justify-center gap-4 p-4 text-center">
+              <div
+                className={cn(
+                  'rounded-full p-4 transition-colors',
+                  error
+                    ? 'bg-red-100/80 group-hover:bg-red-200/60'
+                    : 'bg-gray-100/80 group-hover:bg-primary/10',
+                  isDragActive && 'bg-primary/10',
+                )}
+              >
+                {error ? (
+                  <AlertCircle className={cn('h-6 w-6 text-red-500')} />
+                ) : (
+                  <Upload
+                    className={cn(
+                      'h-6 w-6 text-gray-400 transition-colors group-hover:text-primary',
+                      isDragActive && 'text-primary',
+                    )}
+                  />
+                )}
+              </div>
 
-        <div>
-          {error ? (
-            <div className="space-y-2">
-              <p className="text-base font-medium text-red-600">图片解析失败</p>
-              <p className="text-sm text-red-500">{error}</p>
-              {images.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRetry();
-                  }}
-                  className="mt-2 gap-2"
-                  disabled={isAnalyzing}
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  重新尝试
-                </Button>
-              )}
+              <div>
+                {error ? (
+                  <div className="space-y-2">
+                    <p className="text-base font-medium text-red-600">图片解析失败</p>
+                    <p className="text-sm text-red-500">{error}</p>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-base font-medium text-gray-700">
+                      {isDragActive
+                        ? '松开鼠标上传图片'
+                        : isAnalyzing
+                        ? '正在解析图片...'
+                        : '点击、拖拽或粘贴上传图片'}
+                    </p>
+                    <p className="mt-1 text-sm text-gray-500">
+                      支持 PNG、JPG、JPEG 格式
+                    </p>
+                  </>
+                )}
+              </div>
             </div>
           ) : (
-            <>
-              <p className="text-base font-medium text-gray-700">
-                {isDragActive
-                  ? '松开鼠标上传图片'
-                  : isAnalyzing
-                  ? '正在解析图片...'
-                  : '点击、拖拽或粘贴上传图片'}
-              </p>
-              <p className="mt-1 text-sm text-gray-500">
-                支持 PNG、JPG、JPEG 格式
-              </p>
-            </>
-          )}
-        </div>
-      </div>
-
-      {images.length > 0 && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-          {images.map((image, index) => (
-            <div key={index} className="relative">
+            <div className="relative">
               <Image
-                src={image.preview}
-                alt={`Preview ${index + 1}`}
+                src={images[0]!.preview}
+                alt="Preview"
                 width={200}
                 height={200}
-                className="object-cover rounded-lg"
+                className="block w-full h-auto rounded-lg"
               />
               <button
                 className="absolute top-2 right-2 p-1 bg-white/80 rounded-full hover:bg-white"
-                onClick={() => removeImage(index)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeImage(0);
+                }}
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
-          ))}
+          )}
         </div>
-      )}
+
+        {/* 识别结果区域 */}
+        {images.length > 0 && (
+          <div className="flex-1 flex" onClick={(e) => e.stopPropagation()}>
+            <div className="flex-1 p-4 rounded-lg bg-gray-50 border border-gray-200 flex flex-col">
+              {error ? (
+                <div className="space-y-2">
+                  <p className="text-base font-medium text-red-600">图片解析失败</p>
+                  <p className="text-sm text-red-500">{error}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRetry();
+                    }}
+                    className="mt-2 gap-2"
+                    disabled={isAnalyzing}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    重新尝试
+                  </Button>
+                </div>
+              ) : conversations.result ? (
+                <Textarea
+                  value={conversations.result}
+                  onChange={(e) => onResultChange?.(e.target.value)}
+                  className="flex-1 resize-none"
+                  placeholder="等待识别结果..."
+                />
+              ) : (
+                <div className="h-full flex items-center justify-center text-sm text-gray-500">
+                  {isAnalyzing ? '正在解析图片...' : '等待解析图片...'}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
