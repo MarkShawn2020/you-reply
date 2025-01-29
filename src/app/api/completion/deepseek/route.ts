@@ -4,6 +4,8 @@ import { streamText } from 'ai';
 export async function POST(req: Request) {
   const { messages } = await req.json();
   // const lastMessage = messages[messages.length - 1];
+  console.log("deepseek messsages: ", messages);
+  
 
   const result = streamText({
     model: deepseek('deepseek-reasoner'),

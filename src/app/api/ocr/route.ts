@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`[OCR][${requestId}] Successfully processed image:`, JSON.stringify(data, null, 2));
+    // console.log(`[OCR][${requestId}] Successfully processed image:`, JSON.stringifydata, null, 2));
 
     return NextResponse.json(data);
   } catch (error) {

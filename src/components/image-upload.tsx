@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { OCRResponse, groupTextsByPosition } from '@/services/ocr';
 import { createAnnotatedPreview } from '@/lib/image-utils';
+import { analyzeOCRResult } from '@/services/ai';
 
 interface ImageUploadProps {
   /** User ID for tracking */
@@ -92,25 +93,11 @@ export function ImageUpload({
         preview: annotatedPreview,
       });
       
-      // 4. 处理文本结果
-      const groupedTexts = groupTextsByPosition(data.words_result);
-      
-      const result = groupedTexts
-        .reduce((acc, curr) => {
-          if (!acc[curr.group]) {
-            acc[curr.group] = [];
-          }
-          acc[curr.group]!.push(curr.text);
-          return acc;
-        }, {} as Record<number, string[]>);
-
-      const finalResult = Object.values(result)
-        .map(group => group.join(' '))
-        .join('\n');
-
-      setStreamingResult(finalResult);
-      onStreamResult?.(finalResult);
-      onFinalResult?.(finalResult);
+      // 4. 使用deepseek分析OCR结果
+      const analyzedResult = await analyzeOCRResult(data);
+      setStreamingResult(analyzedResult);
+      onStreamResult?.(analyzedResult);
+      onFinalResult?.(analyzedResult);
     } catch (error) {
       console.error('Error processing image:', error);
       setError(error instanceof Error ? error.message : 'Failed to process image');
