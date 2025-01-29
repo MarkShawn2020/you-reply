@@ -1,20 +1,21 @@
 import { anthropic } from '@ai-sdk/anthropic';
 import { streamText } from 'ai';
 import { HttpsProxyAgent } from 'https-proxy-agent';
+import { createAnthropicWithProxy } from './utils';
 
 export async function POST(req: Request) {
     const { prompt } = await req.json();
     
-    // 从环境变量获取代理配置
-    const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
-    const options: any = {};
+    // 获取代理配置
+    const httpProxy = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
     
-    if (proxyUrl) {
-        options.httpAgent = new HttpsProxyAgent(proxyUrl);
-    }
+    // 创建 Anthropic 客户端（带代理支持）
+    const anthropicClient = httpProxy
+        ? createAnthropicWithProxy(httpProxy)
+        : anthropic;
     
     const result = streamText({
-        model: anthropic('claude-3-5-sonnet-latest', options),
+        model: anthropicClient('claude-3-sonnet-20240229'),
         prompt,
     });
   
