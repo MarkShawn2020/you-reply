@@ -9,6 +9,11 @@ import Link from 'next/link';
 import { Label } from '~/components/ui/label';
 import { Badge } from '~/components/ui/badge';
 import { HistoryDrawer } from '~/components/history-drawer';
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "~/components/ui/hover-card";
 
 export const metadata: Metadata = {
   title: '微信回复助手 - 智能生成合适的回复',
@@ -80,7 +85,7 @@ export default function RootLayout({
           {/* 页脚 */}
           <footer className="w-full border-t bg-white/80 backdrop-blur-md py-8">
             <div className="container">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="space-y-3">
                   <h3 className="font-semibold text-gray-900">关于本产品</h3>
                   <p className="text-sm text-gray-600">微信回复助手致力于提供智能、专业的社交对话解决方案，让沟通更轻松自然。</p>
@@ -93,44 +98,33 @@ export default function RootLayout({
                   </ul>
                 </div>
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-gray-900">联系我</h3>
+                  <h3 className="font-semibold text-gray-900">支持</h3>
                   <ul className="space-y-2 text-sm">
                     <li><Link href="https://github.com/MarkShawn2020/you-reply/issues" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900">问题反馈</Link></li>
                     <li><Link href="https://github.com/MarkShawn2020/you-reply" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900">加入开发</Link></li>
                   </ul>
                 </div>
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-gray-900">关注我</h3>
-                  <div className="relative group">
-                    <button className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900">
-                      <MessageCircle className="h-4 w-4" />
-                      <span>@AI超级川</span>
-                    </button>
-                    <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block">
-                      <div className="bg-white p-4 rounded-lg shadow-lg border">
-                        <div className="w-[320px]">
-                          <img
-                            src="/images/wxmp.png"
-                            alt="AI超级川 公众号"
-                            className="object-cover rounded-lg"
-                            width={320}
-                            height={128}
-                          />
-                        </div>
-
-                      </div>
-                    </div>
-                    <div className="flex space-x-4 mt-4">
-                      <Link href="https://github.com/MarkShawn2020" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900 inline-flex gap-1 items-center">
-                        <Github className="h-5 w-5" />
-                        <span className='text-sm'>@MarkShawn2020</span>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
               </div>
-              <div className="mt-8 pt-8 border-t text-center text-sm text-gray-600">
-                <p className="mb-4"> {new Date().getFullYear()} 微信回复助手 @AI超级川. 保留所有权利.</p>
+              <div className="mt-8 pt-8 border-t text-center text-sm text-gray-600 ">
+                <p className="mb-4 inline-flex items-center gap-1"> 
+                <MessageCircle className="h-4 w-4" />
+                  {new Date().getFullYear()} 微信回复助手                     <HoverCard openDelay={100}>
+                      <HoverCardTrigger asChild>
+                        <button className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900">
+                          
+                          <span className='underline underline-offset-2'>@AI超级川</span>
+                        </button>
+                      </HoverCardTrigger>
+                      <HoverCardContent className="w-[320px] p-0">
+                        <img
+                          src="/images/wxmp.png"
+                          alt="AI超级川 公众号"
+                          className="rounded-md"
+                          width={320}
+                          height={320}
+                        />
+                      </HoverCardContent>
+                    </HoverCard>. 保留所有权利.</p>
                 <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
                   <span className="text-gray-500">Powered by</span>
                   <a href="https://www.deepseek.com/" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900">DeepSeek</a>
