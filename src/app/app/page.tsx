@@ -47,7 +47,7 @@ const defaultScenarios = [
   { id: "work", label: "回复领导" },
   { id: "customer", label: "回复客户" },
   { id: "social", label: "社交聊天"   },
-  { id: "social", label: "分手挽回" },
+  { id: "social-back", label: "分手挽回" },
   { id: "new", label: "新建场景" },
 ];
 
@@ -184,7 +184,7 @@ export default function AppPage() {
           <div className="grid grid-cols-1 gap-6">
             {/* 图片上传区 */}
             <SectionCard
-              title="上传聊天截图"
+              title="Step 1. 上传聊天截图"
               className="bg-white shadow-lg"
               icon={Upload}
             >
@@ -247,16 +247,6 @@ export default function AppPage() {
                   </SelectContent>
                 </Select>
 
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsPromptEditorOpen(true)}
-                  >
-                    <Settings className="mr-2 h-4 w-4" />
-                    高级设置
-                  </Button>
-                </div>
               </div>
               <ImageUploadSection
                 userId={sessionId}
@@ -282,7 +272,7 @@ export default function AppPage() {
             {/* 回复生成区 */}
             <SectionCard
               icon={Pen}
-              title="生成智能回复"
+              title="Step 2. 生成智能回复"
               className="bg-white shadow-lg"
             >
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">

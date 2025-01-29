@@ -10,12 +10,7 @@ export function ImageUploadSection(props: {
   onFinalResult: (result: string) => Promise<void>;
 }) {
   return (
-    <SectionCard
-      icon={Upload}
-      title="步骤 2: 上传聊天记录"
-      className="bg-white shadow-lg"
-    >
-      <div className="space-y-4">
+
         <ImageUpload
           userId={props.userId}
           isAnalyzing={props.analyzing}
@@ -23,7 +18,6 @@ export function ImageUploadSection(props: {
           onStreamResult={props.onStreamResult}
           onFinalResult={props.onFinalResult}
         />
-      </div>
-    </SectionCard>
+
   );
 }
