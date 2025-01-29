@@ -62,9 +62,9 @@ const ProductShowcase = () => {
         </div>
       </div>
 
-      <p className="text-center mt-6 text-gray-600">
+      {/* <p className="text-center mt-6 text-gray-600">
         移动鼠标来旋转展示框，点击上方的颜色按钮来改变背景
-      </p>
+      </p> */}
     </div>
   );
 };
