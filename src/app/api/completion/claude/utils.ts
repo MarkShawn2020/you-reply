@@ -5,6 +5,7 @@ import { fetch, ProxyAgent } from 'undici';
 /**
  * 创建支持代理的 Anthropic 客户端
  * @param proxyUrl - HTTP 代理 URL，如 http://127.0.0.1:7890
+ * @see https://github.com/vercel/ai/issues/1360#issuecomment-2449224535
  */
 export function createAnthropicWithProxy(proxyUrl: string) {
     // 创建代理 agent
