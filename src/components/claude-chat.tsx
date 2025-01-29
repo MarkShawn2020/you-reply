@@ -26,8 +26,6 @@ export function ClaudeChat({ prompt, className }: ClaudeChatProps) {
     }
   };
 
-  console.log({ error });
-
   return (
     <BaseLLMChat
       title="Claude"

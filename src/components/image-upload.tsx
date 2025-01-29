@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { OCRResponse, groupTextsByPosition } from '@/services/ocr';
 import { createAnnotatedPreview } from '@/lib/image-utils';
-import { analyzeOCRResult } from '@/services/ai';
 
 interface ImageUploadProps {
   /** User ID for tracking */
@@ -35,6 +34,8 @@ export function ImageUpload({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [streamingResult, setStreamingResult] = useState<string>('');
+  const [editedResult, setEditedResult] = useState<string>('');
+  const [isEditing, setIsEditing] = useState(false);
   const [retryCount, setRetryCount] = useState<number>(0);
   const [maxRetries, setMaxRetries] = useState<number>(3);
   const [selectedFile, setSelectedFile] = useState<{ file: File; preview: string } | null>(null);
@@ -83,7 +84,7 @@ export function ImageUpload({
       }
 
       const data: OCRResponse = await response.json();
-      console.log('OCR Results:', data);
+      console.log('OCR Results:', JSON.stringify(data, null, 2));
       setOcrResults(data);
       
       // 3. 创建带标注的预览图
@@ -93,11 +94,30 @@ export function ImageUpload({
         preview: annotatedPreview,
       });
       
-      // 4. 使用deepseek分析OCR结果
-      const analyzedResult = await analyzeOCRResult(data);
-      setStreamingResult(analyzedResult);
-      onStreamResult?.(analyzedResult);
-      onFinalResult?.(analyzedResult);
+      // 4. 通过API分析OCR结果
+      console.log('Sending OCR results to analyze API...');
+      const analyzeResponse = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ocrResult: data }),
+      });
+
+      if (!analyzeResponse.ok) {
+        const error = await analyzeResponse.json();
+        console.error('Analysis API error:', error);
+        throw new Error(error.error || 'Failed to analyze OCR results');
+      }
+
+      const analyzeData = await analyzeResponse.json();
+      console.log('Analysis API response:', analyzeData);
+      
+      const result = analyzeData.result;
+      setStreamingResult(result);
+      setEditedResult(result);
+      onStreamResult?.(result);
+      onFinalResult?.(result);
     } catch (error) {
       console.error('Error processing image:', error);
       setError(error instanceof Error ? error.message : 'Failed to process image');
@@ -273,10 +293,48 @@ export function ImageUpload({
           {/* 右侧：解析结果 */}
           <div className="flex-1 space-y-4">
             <div className="space-y-2 h-full flex flex-col">
-              <div className="font-medium">解析结果:</div>
+              <div className="font-medium flex justify-between items-center">
+                <span>解析结果:</span>
+                <div className="space-x-2">
+                  {isEditing ? (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setIsEditing(false);
+                          setEditedResult(streamingResult);
+                        }}
+                      >
+                        取消
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setIsEditing(false);
+                          setStreamingResult(editedResult);
+                          onStreamResult?.(editedResult);
+                          onFinalResult?.(editedResult);
+                        }}
+                      >
+                        保存
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsEditing(true)}
+                    >
+                      编辑
+                    </Button>
+                  )}
+                </div>
+              </div>
               <Textarea
-                value={streamingResult}
-                readOnly
+                value={isEditing ? editedResult : streamingResult}
+                onChange={(e) => setEditedResult(e.target.value)}
+                readOnly={!isEditing}
                 className="flex-1 font-mono text-sm"
               />
             </div>
