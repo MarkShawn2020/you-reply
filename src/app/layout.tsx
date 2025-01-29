@@ -4,10 +4,11 @@ import { GeistSans } from 'geist/font/sans';
 import '~/styles/globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Button } from '@/components/ui/button';
-import { Github, MessageCircle, Tag } from 'lucide-react';
+import { Github, MessageCircle, History } from 'lucide-react';
 import Link from 'next/link';
 import { Label } from '~/components/ui/label';
 import { Badge } from '~/components/ui/badge';
+import { HistoryDrawer } from '~/components/history-drawer';
 
 export const metadata: Metadata = {
   title: '微信回复助手 - 智能生成合适的回复',
@@ -26,6 +27,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const isAppPage = typeof window !== 'undefined' && window.location.pathname === '/app';
+
   return (
     <html lang="zh-CN" className={cn('antialiased', GeistSans.variable)}>
       <body className="min-h-screen overflow-x-hidden bg-gradient-to-b from-gray-50 to-white">
@@ -44,21 +47,29 @@ export default function RootLayout({
                   <Badge variant={"secondary"}>CS 魔法社</Badge>
                 </Link>
                 <nav className="hidden md:flex items-center space-x-6">
-                  <Link href="#features" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">功能特点</Link>
-                  <Link href="#how-it-works" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">使用方法</Link>
-                  <Link href="#pricing" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">价格方案</Link>
+                  {!isAppPage ? (
+                    <>
+                      <Link href="#features" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">功能特点</Link>
+                      <Link href="#how-it-works" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">使用方法</Link>
+                      <Link href="#pricing" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">价格方案</Link>
+                    </>
+                  ) : null}
                 </nav>
               </div>
               <div className="flex items-center gap-4">
-                <Button variant="outline" size="sm" className="gap-2 hidden sm:flex" asChild>
-                  <Link href="https://github.com/MarkShawn2020/you-reply" target="_blank" rel="noopener noreferrer">
-                    <Github className="h-4 w-4" />
-                    <span>GitHub</span>
-                  </Link>
-                </Button>
-                <Button size="sm" className="bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600" asChild>
-                  <Link href="#upload">开始使用</Link>
-                </Button>
+
+                  <HistoryDrawer>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <History className="h-4 w-4" />
+                      <span>历史记录</span>
+                    </Button>
+                  </HistoryDrawer>
+                  
+                {!isAppPage && (
+                  <Button size="sm" className="bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600" asChild>
+                    <Link href="/app">开始使用</Link>
+                  </Button>
+                )}
               </div>
             </div>
           </header>
