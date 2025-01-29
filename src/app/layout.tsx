@@ -130,7 +130,16 @@ export default function RootLayout({
                 </div>
               </div>
               <div className="mt-8 pt-8 border-t text-center text-sm text-gray-600">
-                <p> {new Date().getFullYear()} 微信回复助手 @AI超级川. 保留所有权利.</p>
+                <p className="mb-4"> {new Date().getFullYear()} 微信回复助手 @AI超级川. 保留所有权利.</p>
+                <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+                  <span className="text-gray-500">Powered by</span>
+                  <a href="https://www.deepseek.com/" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900">DeepSeek</a>
+                  <a href="https://codeium.com/windsurf/" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900">Windsurf</a>
+                  <a href="https://claude.ai/" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900">Claude</a>
+                  <a href="https://ai.baidu.com/tech/ocr" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900">Baidu OCR</a>
+                  <a href="https://nextjs.org/" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900">Next.js</a>
+                  <a href="https://ui.shadcn.com/" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900">shadcn/ui</a>
+                </div>
               </div>
             </div>
           </footer>
