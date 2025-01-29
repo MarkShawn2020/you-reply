@@ -186,18 +186,9 @@ export default function HomePage() {
             <ImageUpload
               onImageUpload={handleImageUpload}
               className="bg-white shadow-sm"
+              error={error}
+              isAnalyzing={isAnalyzing}
             />
-          </div>
-
-          {/* 右侧：回复生成区域 */}
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">生成设置</h2>
-              <BackgroundInfoDialog
-                initialContent={backgroundInfo}
-                onSave={handleSaveBackgroundInfo}
-              />
-            </div>
 
             <SectionCard icon={Bot} title="解析结果">
               {isAnalyzing ? (
@@ -216,6 +207,32 @@ export default function HomePage() {
                 </div>
               )}
             </SectionCard>
+          </div>
+
+          {/* 右侧：回复生成区域 */}
+          <div className="space-y-6">
+            <SectionCard
+              icon={Bot}
+              title="补充背景"
+              action={
+                <BackgroundInfoDialog
+                  initialContent={backgroundInfo}
+                  onSave={handleSaveBackgroundInfo}
+                />
+              }
+            >
+              <div className="space-y-3">
+                <p className="text-sm text-gray-500">
+                  {backgroundInfo ? (
+                    backgroundInfo
+                  ) : (
+                    <span className="italic text-gray-400">
+                      未设置补充背景信息，点击右上角按钮添加
+                    </span>
+                  )}
+                </p>
+              </div>
+            </SectionCard>
 
             <SectionCard icon={MessageCircle} title="生成的回复">
               {isGenerating ? (
@@ -225,14 +242,19 @@ export default function HomePage() {
                   progressValue={33}
                 />
               ) : (
-                <Textarea
-                  value={generatedReply}
-                  placeholder="点击生成回复按钮开始生成..."
-                  className="min-h-[200px] resize-none"
-                  readOnly
-                />
+                <div className="space-y-3">
+                  <Textarea
+                    value={generatedReply}
+                    onChange={(e) => setGeneratedReply(e.target.value)}
+                    placeholder="点击生成回复按钮开始生成..."
+                    className="min-h-[200px] resize-none"
+                  />
+                  <div className="text-sm text-gray-500">
+                    提示：可以编辑生成的回复以调整语气和内容
+                  </div>
+                </div>
               )}
-              <div className="flex justify-end gap-3">
+              <div className="flex justify-end gap-3 py-2">
                 <Button
                   variant="outline"
                   onClick={handleCopy}
@@ -248,7 +270,7 @@ export default function HomePage() {
                   className="gap-2"
                 >
                   <Wand2 className="h-4 w-4" />
-                  {isGenerating ? '生成中...' : '生成回复'}
+                  {isGenerating ? '生成中...' : '重新生成'}
                 </Button>
               </div>
             </SectionCard>

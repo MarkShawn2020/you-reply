@@ -1,102 +1,73 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { Upload } from 'lucide-react';
+import { Upload, AlertCircle, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { Button } from '@/components/ui/button';
 
 interface ImageUploadProps {
   onImageUpload: (file: File) => void;
   className?: string;
+  error?: string | null;
+  isAnalyzing?: boolean;
 }
 
-export function ImageUpload({ onImageUpload, className }: ImageUploadProps) {
-  const [preview, setPreview] = useState<string | null>(null);
-
-  const handleFile = (file: File) => {
-    // 创建预览
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-
-    // 调用上传回调
-    onImageUpload(file);
-  };
+export function ImageUpload({
+  onImageUpload,
+  className,
+  error,
+  isAnalyzing,
+}: ImageUploadProps) {
+  const [lastFile, setLastFile] = useState<File | null>(null);
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
-      const file = acceptedFiles[0];
-      if (file) {
-        handleFile(file);
+      if (acceptedFiles.length > 0) {
+        const file = acceptedFiles[0];
+        setLastFile(file);
+        onImageUpload(file);
       }
     },
-    [handleFile],
-  );
-
-  const handlePaste = useCallback(
-    (e: ClipboardEvent) => {
-      const { items } = e.clipboardData || new DataTransfer();
-      if (!items) return;
-
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        if (item && item.type.indexOf('image') !== -1) {
-          const file = item.getAsFile();
-          if (file) {
-            handleFile(file);
-          }
-          break;
-        }
-      }
-    },
-    [handleFile],
+    [onImageUpload],
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/*': [],
+      'image/*': ['.png', '.jpg', '.jpeg'],
     },
     maxFiles: 1,
+    multiple: false,
+    disabled: isAnalyzing,
   });
 
+  const handleRetry = useCallback(() => {
+    if (lastFile) {
+      onImageUpload(lastFile);
+    }
+  }, [lastFile, onImageUpload]);
+
   useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items || isAnalyzing) return;
+
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const file = items[i].getAsFile();
+          if (file) {
+            setLastFile(file);
+            onImageUpload(file);
+            break;
+          }
+        }
+      }
+    };
+
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
-  }, [handlePaste]);
-
-  if (preview) {
-    return (
-      <div className={cn('relative rounded-lg border', className)}>
-        <img
-          src={preview}
-          alt="Preview"
-          className="h-auto w-full rounded-lg object-contain"
-        />
-        <button
-          onClick={() => setPreview(null)}
-          className="absolute right-2 top-2 rounded-full bg-white/80 p-2 text-gray-600 shadow-sm hover:bg-white hover:text-gray-900"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M18 6 6 18" />
-            <path d="m6 6 12 12" />
-          </svg>
-        </button>
-      </div>
-    );
-  }
+  }, [onImageUpload, isAnalyzing]);
 
   return (
     <div
@@ -105,7 +76,10 @@ export function ImageUpload({ onImageUpload, className }: ImageUploadProps) {
         'group relative flex cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed p-12 text-center transition-colors',
         isDragActive
           ? 'border-primary/50 bg-primary/5'
+          : error
+          ? 'border-red-200 bg-red-50/50'
           : 'border-gray-200 hover:border-primary/30 hover:bg-gray-50/50',
+        isAnalyzing && 'cursor-not-allowed opacity-60',
         className,
       )}
     >
@@ -113,23 +87,62 @@ export function ImageUpload({ onImageUpload, className }: ImageUploadProps) {
 
       <div
         className={cn(
-          'rounded-full bg-gray-100/80 p-4 transition-colors group-hover:bg-primary/10',
+          'rounded-full p-4 transition-colors',
+          error
+            ? 'bg-red-100/80 group-hover:bg-red-200/60'
+            : 'bg-gray-100/80 group-hover:bg-primary/10',
           isDragActive && 'bg-primary/10',
         )}
       >
-        <Upload
-          className={cn(
-            'h-6 w-6 text-gray-400 transition-colors group-hover:text-primary',
-            isDragActive && 'text-primary',
-          )}
-        />
+        {error ? (
+          <AlertCircle
+            className={cn('h-6 w-6 text-red-500')}
+          />
+        ) : (
+          <Upload
+            className={cn(
+              'h-6 w-6 text-gray-400 transition-colors group-hover:text-primary',
+              isDragActive && 'text-primary',
+            )}
+          />
+        )}
       </div>
 
       <div>
-        <p className="text-base font-medium text-gray-700">
-          {isDragActive ? '松开鼠标上传图片' : '点击、拖拽或粘贴上传图片'}
-        </p>
-        <p className="mt-1 text-sm text-gray-500">支持 PNG、JPG、JPEG 格式</p>
+        {error ? (
+          <div className="space-y-2">
+            <p className="text-base font-medium text-red-600">图片解析失败</p>
+            <p className="text-sm text-red-500">{error}</p>
+            {lastFile && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRetry();
+                }}
+                className="mt-2 gap-2"
+                disabled={isAnalyzing}
+              >
+                <RefreshCw className="h-4 w-4" />
+                重新尝试
+              </Button>
+            )}
+          </div>
+        ) : (
+          <>
+            <p className="text-base font-medium text-gray-700">
+              {isDragActive
+                ? '松开鼠标上传图片'
+                : isAnalyzing
+                ? '正在解析图片...'
+                : '点击、拖拽或粘贴上传图片'}
+            </p>
+            <p className="mt-1 text-sm text-gray-500">
+              支持 PNG、JPG、JPEG 格式
+            </p>
+          </>
+        )}
       </div>
     </div>
   );
