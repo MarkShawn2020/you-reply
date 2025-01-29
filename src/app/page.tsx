@@ -54,6 +54,25 @@ export default function HomePage() {
   const [isPromptEditorOpen, setIsPromptEditorOpen] = useState(false);
   const { toast } = useToast();
 
+  // 添加快捷键支持
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check for Cmd/Ctrl + Shift + P
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'p') {
+        e.preventDefault(); // 防止默认行为
+        setIsPromptEditorOpen(true);
+        // toast({
+        //   title: '提示词编辑器',
+        //   description: '使用 Cmd + Shift + P 打开/关闭',
+        //   duration: 2000,
+        // });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [toast]);
+
   // 生成新的会话 ID
   useEffect(() => {
     setSessionId(crypto.randomUUID());
@@ -138,37 +157,66 @@ export default function HomePage() {
       <section className="py-12 bg-gray-50">
         <div className="container">
           <div className="max-w-4xl mx-auto space-y-6">
+            {/* Advanced Settings Card */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900">智能回复助手</h2>
+              <HistoryDrawer />
+            </div>
+
             {/* Step 1: Chat Scenario Selection */}
             <SectionCard
               icon={MessageCircle}
               title="步骤 1: 选择聊天场景"
               className="bg-white shadow-lg"
             >
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {[
-                  { id: 'newyear', label: '拜年祝福', prompt: '这是一个拜年场景，需要礼貌热情的祝福语' },
-                  { id: 'work', label: '工作沟通', prompt: '这是一个工作沟通场景，需要专业简洁的回复' },
-                  { id: 'friend', label: '朋友聊天', prompt: '这是一个朋友聊天场景，需要轻松自然的对话' },
-                  { id: 'customer', label: '客户服务', prompt: '这是一个客户服务场景，需要耐心周到的回应' },
-                  { id: 'family', label: '家人互动', prompt: '这是一个家人互动场景，需要温暖亲切的交流' },
-                  { id: 'custom', label: '自定义场景', prompt: '请在背景信息中详细说明场景' },
-                ].map((scenario) => (
-                  <Button
-                    key={scenario.id}
-                    variant={backgroundInfo === scenario.prompt ? 'default' : 'outline'}
-                    className="h-auto py-4 px-4 flex flex-col gap-2"
-                    onClick={async () => {
-                      setBackgroundInfo(scenario.prompt);
-                      await saveBackgroundInfo(scenario.prompt);
+              <div className="space-y-6">
+                {/* Predefined Scenarios */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-gray-700">预设场景</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {[
+                      { id: 'newyear', label: '拜年祝福', prompt: '这是一个拜年场景，需要礼貌热情的祝福语' },
+                      { id: 'work', label: '工作沟通', prompt: '这是一个工作沟通场景，需要专业简洁的回复' },
+                      { id: 'friend', label: '朋友聊天', prompt: '这是一个朋友聊天场景，需要轻松自然的对话' },
+                      { id: 'customer', label: '客户服务', prompt: '这是一个客户服务场景，需要耐心周到的回应' },
+                      { id: 'family', label: '家人互动', prompt: '这是一个家人互动场景，需要温暖亲切的交流' },
+                      { id: 'custom', label: '自定义场景', prompt: '请在下方详细说明场景' },
+                    ].map((scenario) => (
+                      <Button
+                        key={scenario.id}
+                        variant={backgroundInfo === scenario.prompt ? 'default' : 'outline'}
+                        className="h-auto py-4 px-4 flex flex-col gap-2"
+                        onClick={async () => {
+                          setBackgroundInfo(scenario.prompt);
+                          await saveBackgroundInfo(scenario.prompt);
+                          toast({
+                            title: `已选择${scenario.label}场景`,
+                            duration: 2000,
+                          });
+                        }}
+                      >
+                        <span className="text-sm font-medium">{scenario.label}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Background Info Editor */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-gray-700">场景详细说明</h3>
+                  <BackgroundInfoEditor
+                    initialValue={backgroundInfo}
+                    onSave={async (value) => {
+                      if (!sessionId) return;
+                      await saveBackgroundInfo(value);
+                      setBackgroundInfo(value);
                       toast({
-                        title: `已选择${scenario.label}场景`,
+                        title: '场景信息已保存',
                         duration: 2000,
                       });
                     }}
-                  >
-                    <span className="text-sm font-medium">{scenario.label}</span>
-                  </Button>
-                ))}
+                  />
+                </div>
               </div>
             </SectionCard>
 
@@ -180,7 +228,7 @@ export default function HomePage() {
             >
               <div className="space-y-4">
                 <ImageUpload
-                  onUpload={async (file: File) => {
+                  onImageUpload={async (file: File) => {
                     setError(null);
                     setIsAnalyzing(true);
                     setParsedText('');
@@ -204,6 +252,8 @@ export default function HomePage() {
                       setIsAnalyzing(false);
                     }
                   }}
+                  isAnalyzing={isAnalyzing}
+                  error={error}
                 />
 
                 {/* Analysis Results */}
@@ -291,32 +341,16 @@ export default function HomePage() {
       </section>
 
       {/* Settings Panel */}
-      <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-[9999]">
-        <HistoryDrawer />
-        <BackgroundInfoEditor
-          initialValue={backgroundInfo}
-          onSave={async (value) => {
-            if (!sessionId) return;
-            await saveBackgroundInfo(value);
-            setBackgroundInfo(value);
-            toast({
-              title: '背景信息已保存',
-              duration: 2000,
-            });
-          }}
-        />
-
-        <PromptEditorDialog
-          open={isPromptEditorOpen}
-          onOpenChange={setIsPromptEditorOpen}
-          imagePrompt={imagePrompt}
-          replyPrompt={replyPrompt}
-          onSave={(newImagePrompt, newReplyPrompt) => {
-            setImagePrompt(newImagePrompt);
-            setReplyPrompt(newReplyPrompt);
-          }}
-        />
-      </div>
+      <PromptEditorDialog
+        imagePrompt={imagePrompt}
+        replyPrompt={replyPrompt}
+        isOpen={isPromptEditorOpen}
+        onOpenChange={setIsPromptEditorOpen}
+        onSave={(newImagePrompt, newReplyPrompt) => {
+          setImagePrompt(newImagePrompt);
+          setReplyPrompt(newReplyPrompt);
+        }}
+      />
     </div>
   );
 }

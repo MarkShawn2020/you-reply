@@ -23,18 +23,14 @@ export function BackgroundInfoEditor({
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-lg font-semibold">背景信息</h3>
           <BackgroundInfoDialog
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        initialContent={initialValue}
-        onSave={onSave}
-      />
+            initialContent={initialValue}
+            onSave={onSave}
+          />
         </div>
         <div className="whitespace-pre-wrap">
           {initialValue || "暂无背景信息"}
         </div>
       </Card>
-
-
     </>
   );
 }

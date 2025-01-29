@@ -25,17 +25,30 @@ interface PromptEditorDialogProps {
   imagePrompt: string;
   replyPrompt: string;
   onSave: (imagePrompt: string, replyPrompt: string) => void;
+  isOpen?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
 }
 
 export function PromptEditorDialog({
   imagePrompt,
   replyPrompt,
   onSave,
+  isOpen: externalIsOpen,
+  onOpenChange,
 }: PromptEditorDialogProps) {
   const [localImagePrompt, setLocalImagePrompt] = useState(imagePrompt);
   const [localReplyPrompt, setLocalReplyPrompt] = useState(replyPrompt);
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
   const { toast } = useToast();
+
+  const isOpen = externalIsOpen ?? internalIsOpen;
+  const handleOpenChange = useCallback((open: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(open);
+    } else {
+      setInternalIsOpen(open);
+    }
+  }, [onOpenChange]);
 
   // 同步外部属性变化
   useEffect(() => {
@@ -54,21 +67,21 @@ export function PromptEditorDialog({
     }
 
     onSave(localImagePrompt, localReplyPrompt);
-    setIsOpen(false);
+    handleOpenChange(false);
     toast({
       title: '保存成功',
       description: 'Prompt 模板已更新',
     });
-  }, [localImagePrompt, localReplyPrompt, onSave, toast]);
+  }, [localImagePrompt, localReplyPrompt, onSave, toast, handleOpenChange]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      {/* <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
           <Settings2 className="h-4 w-4" />
           编辑 Prompt 模板
         </Button>
-      </DialogTrigger>
+      </DialogTrigger> */}
       <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
