@@ -11,7 +11,7 @@ function analyzeOCRLocally(ocrResult: OCRResponse): string {
     let currentGroup = -1;
     
     for (const item of sortedResults) {
-      const { words, location } = item;
+      const { text, location } = item;
       const { left } = location;
       
       // 判断消息类型
@@ -21,18 +21,18 @@ function analyzeOCRLocally(ocrResult: OCRResponse): string {
           result += '[我] ';
           currentGroup = 1;
         }
-        result += words + '\n';
+        result += text + '\n';
       } else if (left < 500) {
         // 他人消息
         if (currentGroup !== 2) {
           result += '[他人] ';
           currentGroup = 2;
         }
-        result += words + '\n';
+        result += text + '\n';
       } else {
         // 可能是时间或系统消息
-        if (words.match(/^\d{1,2}:\d{2}$/) || words.match(/^\d{4}-\d{2}-\d{2}/)) {
-          result += '\n' + words + '\n';
+        if (text.match(/^\d{1,2}:\d{2}$/) || text.match(/^\d{4}-\d{2}-\d{2}/)) {
+          result += '\n' + text + '\n';
           currentGroup = -1;
         }
       }
