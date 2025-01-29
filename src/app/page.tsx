@@ -25,13 +25,34 @@ const promptEditorOpenAtom = atomWithStorage("promptEditorOpen", false);
 
 export default function HomePage() {
   const [parsedText, setParsedText] = useState("");
-  const [backgroundInfo, setBackgroundInfo] = useState("");
+  const [background, setBackground] = useState("");
   const [sessionId, setSessionId] = useState("");
   const [imagePrompt, setImagePrompt] = useAtom(imagePromptAtom);
   const [replyPrompt, setReplyPrompt] = useAtom(replyPromptAtom);
   const [isPromptEditorOpen, setIsPromptEditorOpen] =
     useAtom(promptEditorOpenAtom);
   const { toast } = useToast();
+
+  const genReplyPrompt = `
+  这是一段微信聊天记录上下文：
+  <context>
+  {{parsedText}}
+  </context>
+  
+  场景是：
+    <background>
+  {{background}}
+    </background>
+  
+  用户聊天风格：
+    <style>
+  {{style}}
+    </style>
+  
+  请代替真人回复，要求：
+  - 分辨不出是否 AI 生成
+  - 要遵循用户的聊天风格（若有）
+`;
 
   // 添加快捷键支持
   useEffect(() => {
@@ -62,7 +83,7 @@ export default function HomePage() {
       try {
         const info = await getLatestBackgroundInfo();
         if (info) {
-          setBackgroundInfo(info.content);
+          setBackground(info.content);
         }
       } catch (error) {
         console.error("Failed to load background info:", error);
@@ -96,11 +117,11 @@ export default function HomePage() {
                 <Button
                   key={scenario.id}
                   variant={
-                    backgroundInfo === scenario.prompt ? "default" : "outline"
+                    background === scenario.prompt ? "default" : "outline"
                   }
                   className="flex h-auto flex-col gap-2 px-4 py-4"
                   onClick={async () => {
-                    setBackgroundInfo(scenario.prompt);
+                    setBackground(scenario.prompt);
                     void saveBackgroundInfo(scenario.prompt);
                     toast({
                       title: `已选择${scenario.label}场景`,
@@ -111,11 +132,11 @@ export default function HomePage() {
                   <span className="text-sm font-medium">{scenario.label}</span>
                 </Button>
               )}
-              initialValue={backgroundInfo}
+              initialValue={background}
               onSave={async (value) => {
                 if (!sessionId) return;
                 void saveBackgroundInfo(value);
-                setBackgroundInfo(value);
+                setBackground(value);
                 toast({
                   title: "场景信息已保存",
                   duration: 2000,
@@ -138,8 +159,8 @@ export default function HomePage() {
                 await saveChatContext(sessionId, result, "");
 
                 // Save background info if not already set
-                if (backgroundInfo) {
-                  void saveBackgroundInfo(backgroundInfo);
+                if (background) {
+                  void saveBackgroundInfo(background);
                 }
 
                 toast({
@@ -151,8 +172,8 @@ export default function HomePage() {
 
             {/* Step 3: Generate Reply */}
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <DeepseekChat parsedText={parsedText} />
-              <ClaudeChat parsedText={parsedText} />
+              <DeepseekChat prompt={genReplyPrompt} />
+              <ClaudeChat prompt={genReplyPrompt} />
             </div>
           </div>
         </div>

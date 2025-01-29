@@ -37,8 +37,8 @@ export function GenReplySection({
             ) : (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <DeepseekChat parsedText={parsedText} />
-                  <ClaudeChat parsedText={parsedText} />
+                  <DeepseekChat prompt={parsedText} />
+                  <ClaudeChat prompt={parsedText} />
                 </div>
                 <div className="flex gap-2">
                   <Button

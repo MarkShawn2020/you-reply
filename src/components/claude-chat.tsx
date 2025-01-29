@@ -4,27 +4,19 @@ import { getErrorMessage } from "@/lib/error";
 import { BaseLLMChat } from "./base-llm-chat";
 
 export interface ClaudeChatProps {
-  parsedText: string;
+  prompt: string;
   className?: string;
 }
 
-export function ClaudeChat({
-  parsedText,
-  className,
-}: ClaudeChatProps) {
+export function ClaudeChat({ prompt, className }: ClaudeChatProps) {
   const { toast } = useToast();
-  const {
-    completion,
-    isLoading,
-    complete,
-    error,
-  } = useCompletion({
+  const { completion, isLoading, complete, error } = useCompletion({
     api: "/api/completion/claude",
   });
 
   const handleGenerate = async () => {
     try {
-      await complete(parsedText);
+      await complete(prompt);
     } catch (e) {
       toast({
         title: "生成失败",
@@ -34,9 +26,7 @@ export function ClaudeChat({
     }
   };
 
-  console.log({error});
-  
-
+  console.log({ error });
 
   return (
     <BaseLLMChat
