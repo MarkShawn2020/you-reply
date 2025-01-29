@@ -17,7 +17,7 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
-    CLAUDE_API_KEY: z.string(),
+    ANTHROPIC_API_KEY: z.string(),
     DEEPSEEK_API_KEY: z.string(),
     HTTP_PROXY: z.string().optional(),
   },
@@ -38,7 +38,7 @@ export const env = createEnv({
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
-    CLAUDE_API_KEY: process.env.CLAUDE_API_KEY,
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
     DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY,
     HTTP_PROXY: process.env.HTTP_PROXY,
   },

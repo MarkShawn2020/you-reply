@@ -43,7 +43,7 @@ const API_CONFIG = {
 
 // 创建 Anthropic 客户端实例
 const anthropic = new Anthropic({
-  apiKey: env.CLAUDE_API_KEY,
+  apiKey: env.ANTHROPIC_API_KEY,
   ...(env.HTTP_PROXY
     ? {
         httpAgent: new HttpsProxyAgent(env.HTTP_PROXY) as Agent,
