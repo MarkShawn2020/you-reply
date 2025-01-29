@@ -99,12 +99,17 @@ export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       {/* Hero Section */}
-      <HeroSection />
+      <section id="hero">
+        <HeroSection />
+      </section>
 
-      <FeaturedSection />
+      {/* Features Section */}
+      <section id="features">
+        <FeaturedSection />
+      </section>
 
       {/* Main Application Section */}
-      <section className="bg-gray-50 py-12">
+      <section id="upload" className="bg-gray-50 py-12">
         <div className="container">
           <div className="mx-auto max-w-4xl space-y-6">
             {/* Advanced Settings Card */}
@@ -116,37 +121,39 @@ export default function HomePage() {
             </div>
 
             {/* Step 1: Chat Scenario Selection */}
-            <ChatScenarioSection
-              callbackfn={(scenario) => (
-                <Button
-                  key={scenario.id}
-                  variant={
-                    background === scenario.prompt ? "default" : "outline"
-                  }
-                  className="flex h-auto flex-col gap-2 px-4 py-4"
-                  onClick={async () => {
-                    setBackground(scenario.prompt);
-                    void saveBackgroundInfo(scenario.prompt);
-                    toast({
-                      title: `已选择${scenario.label}场景`,
-                      duration: 2000,
-                    });
-                  }}
-                >
-                  <span className="text-sm font-medium">{scenario.label}</span>
-                </Button>
-              )}
-              initialValue={background}
-              onSave={async (value) => {
-                if (!sessionId) return;
-                void saveBackgroundInfo(value);
-                setBackground(value);
-                toast({
-                  title: "场景信息已保存",
-                  duration: 2000,
-                });
-              }}
-            />
+            <div id="how-it-works">
+              <ChatScenarioSection
+                callbackfn={(scenario) => (
+                  <Button
+                    key={scenario.id}
+                    variant={
+                      background === scenario.prompt ? "default" : "outline"
+                    }
+                    className="flex h-auto flex-col gap-2 px-4 py-4"
+                    onClick={async () => {
+                      setBackground(scenario.prompt);
+                      void saveBackgroundInfo(scenario.prompt);
+                      toast({
+                        title: `已选择${scenario.label}场景`,
+                        duration: 2000,
+                      });
+                    }}
+                  >
+                    <span className="text-sm font-medium">{scenario.label}</span>
+                  </Button>
+                )}
+                initialValue={background}
+                onSave={async (value) => {
+                  if (!sessionId) return;
+                  void saveBackgroundInfo(value);
+                  setBackground(value);
+                  toast({
+                    title: "场景信息已保存",
+                    duration: 2000,
+                  });
+                }}
+              />
+            </div>
 
             {/* Step 2: Image Upload */}
             <ImageUploadSection
@@ -176,16 +183,15 @@ export default function HomePage() {
 
             {/* Step 3: Generate Reply */}
             <SectionCard
-      icon={Pen}
-      title="步骤 3: 生成智能回复"
-      className="bg-white shadow-lg"
-    >
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <DeepseekChat prompt={genReplyPrompt} />
-              <ClaudeChat prompt={genReplyPrompt} />
-            </div>
-      </SectionCard>
-
+              icon={Pen}
+              title="步骤 3: 生成智能回复"
+              className="bg-white shadow-lg"
+            >
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <DeepseekChat prompt={genReplyPrompt} />
+                <ClaudeChat prompt={genReplyPrompt} />
+              </div>
+            </SectionCard>
           </div>
         </div>
       </section>

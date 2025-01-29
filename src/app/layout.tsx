@@ -1,5 +1,3 @@
-
-
 import { cn } from '@/lib/utils';
 import type { Metadata } from 'next';
 import { GeistSans } from 'geist/font/sans';
@@ -10,7 +8,6 @@ import { Github, MessageCircle, Tag } from 'lucide-react';
 import Link from 'next/link';
 import { Label } from '~/components/ui/label';
 import { Badge } from '~/components/ui/badge';
-
 
 export const metadata: Metadata = {
   title: '微信回复助手 - 智能生成合适的回复',
@@ -53,12 +50,14 @@ export default function RootLayout({
                 </nav>
               </div>
               <div className="flex items-center gap-4">
-                <Button variant="outline" size="sm" className="gap-2 hidden sm:flex">
-                  <Github className="h-4 w-4" />
-                  <span>GitHub</span>
+                <Button variant="outline" size="sm" className="gap-2 hidden sm:flex" asChild>
+                  <Link href="https://github.com/MarkShawn2020/you-reply" target="_blank" rel="noopener noreferrer">
+                    <Github className="h-4 w-4" />
+                    <span>GitHub</span>
+                  </Link>
                 </Button>
-                <Button size="sm" className="bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600">
-                  开始使用
+                <Button size="sm" className="bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600" asChild>
+                  <Link href="#upload">开始使用</Link>
                 </Button>
               </div>
             </div>
@@ -86,16 +85,15 @@ export default function RootLayout({
                 <div className="space-y-3">
                   <h3 className="font-semibold text-gray-900">联系我们</h3>
                   <ul className="space-y-2 text-sm">
-                    <li><Link href="mailto:support@example.com" className="text-gray-600 hover:text-gray-900">客户支持</Link></li>
-                    <li><Link href="#" className="text-gray-600 hover:text-gray-900">商务合作</Link></li>
+                    <li><Link href="https://github.com/MarkShawn2020/you-reply/issues" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900">问题反馈</Link></li>
+                    <li><Link href="https://github.com/MarkShawn2020/you-reply" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900">加入开发</Link></li>
                   </ul>
                 </div>
                 <div className="space-y-3">
                   <h3 className="font-semibold text-gray-900">关注我们</h3>
                   <div className="flex space-x-4">
-                    <Link href="#" className="text-gray-600 hover:text-gray-900">
-                      <span className="sr-only">微信公众号</span>
-                      <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8.5,13.5A1.5,1.5 0 0,1 7,12A1.5,1.5 0 0,1 8.5,10.5A1.5,1.5 0 0,1 10,12A1.5,1.5 0 0,1 8.5,13.5M15.5,13.5A1.5,1.5 0 0,1 14,12A1.5,1.5 0 0,1 15.5,10.5A1.5,1.5 0 0,1 17,12A1.5,1.5 0 0,1 15.5,13.5M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg>
+                    <Link href="https://github.com/MarkShawn2020/you-reply" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900">
+                      <Github className="h-5 w-5" />
                     </Link>
                   </div>
                 </div>
