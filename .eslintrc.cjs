@@ -45,8 +45,8 @@ const config = {
     "@typescript-eslint/prefer-nullish-coalescing":"off",
     "@typescript-eslint/no-floating-promises":"off",
     "@typescript-eslint/ban-ts-comment":"off",
-    "@typescript-eslint/no-explicit-any": "off"
-
+    "@typescript-eslint/no-explicit-any": "off",
+    "prefer-const": "off"
   }
 }
 module.exports = config;
