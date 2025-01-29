@@ -33,7 +33,7 @@ export async function generateReply(parsedText: string): Promise<any> {
       );
 
     // 使用 DeepSeek API 生成回复
-    const result = await callDeepSeek(prompt);
+    const result = await callClaude(prompt);
     return result;
   } catch (error) {
     console.error('Error generating reply:', error);
