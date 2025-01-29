@@ -8,6 +8,8 @@ export async function POST(req: Request) {
     
     // 获取代理配置
     const httpProxy = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
+    console.log({httpProxy});
+    
     
     // 创建 Anthropic 客户端（带代理支持）
     const anthropicClient = httpProxy
