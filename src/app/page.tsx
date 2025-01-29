@@ -36,6 +36,9 @@ import { ContactInfoEditor } from './_components/contact-info-editor';
 import { PromptEditorDialog } from './_components/prompt-editor-dialog';
 import { useAtom } from 'jotai';
 import { imagePromptAtom, replyPromptAtom } from '@/store/prompts';
+import { atomWithStorage } from 'jotai/utils';
+
+const promptEditorOpenAtom = atomWithStorage('promptEditorOpen', false);
 
 export default function HomePage() {
   const [parsedText, setParsedText] = useState('');
@@ -45,13 +48,9 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [backgroundInfo, setBackgroundInfo] = useState('');
   const [sessionId, setSessionId] = useState('');
-  const [contactInfo, setContactInfo] = useState<{
-    name: string;
-    notes: string;
-  }>({ name: '', notes: '' });
   const [imagePrompt, setImagePrompt] = useAtom(imagePromptAtom);
   const [replyPrompt, setReplyPrompt] = useAtom(replyPromptAtom);
-  const [isPromptEditorOpen, setIsPromptEditorOpen] = useState(false);
+  const [isPromptEditorOpen, setIsPromptEditorOpen] = useAtom(promptEditorOpenAtom);
   const { toast } = useToast();
 
   // 添加快捷键支持
@@ -61,17 +60,12 @@ export default function HomePage() {
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'p') {
         e.preventDefault(); // 防止默认行为
         setIsPromptEditorOpen(true);
-        // toast({
-        //   title: '提示词编辑器',
-        //   description: '使用 Cmd + Shift + P 打开/关闭',
-        //   duration: 2000,
-        // });
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toast]);
+  }, [setIsPromptEditorOpen]);
 
   // 生成新的会话 ID
   useEffect(() => {
@@ -104,7 +98,7 @@ export default function HomePage() {
               <span className="block text-blue-600">让社交沟通更轻松自然</span>
             </h1>
             <p className="mt-6 text-lg leading-8 text-gray-600">
-              上传微信聊天截图，快速生成专业、得体的回复。适用于工作沟通、社交聊天、客户服务等多种场景。
+              上传微信聊天截图，快速生成专业、得体的回复。<br/> 适用于工作沟通、社交聊天、客户服务等多种场景。
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Button size="lg" className="bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600">
@@ -262,9 +256,11 @@ export default function HomePage() {
                 ) : parsedText ? (
                   <div className="space-y-2">
                     <h3 className="text-sm font-medium text-gray-700">识别结果预览</h3>
-                    <div className="rounded-lg border bg-gray-50 p-4">
-                      <pre className="whitespace-pre-wrap text-sm text-gray-700">{parsedText}</pre>
-                    </div>
+                    <Textarea
+                      value={parsedText}
+                      onChange={(e) => setParsedText(e.target.value)}
+                      className="min-h-[100px]"
+                    />
                   </div>
                 ) : null}
               </div>
