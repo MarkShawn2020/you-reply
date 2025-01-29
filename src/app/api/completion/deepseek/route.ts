@@ -1,7 +1,5 @@
-import { fireworks } from '@ai-sdk/fireworks';
-import { generateText, streamText } from 'ai';
 import { deepseek } from '@ai-sdk/deepseek';
-
+import { streamText } from 'ai';
 
 export async function POST(req: Request) {
   const { prompt } = await req.json();
@@ -15,4 +13,3 @@ export async function POST(req: Request) {
     sendReasoning: true,
   });
 }
-

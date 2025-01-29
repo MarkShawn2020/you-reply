@@ -3,10 +3,12 @@ import { Button } from "~/components/ui/button";
 import { Textarea } from "~/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { copyToClipboard } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 export interface BaseLLMChatProps {
   title: string;
   completion: string | undefined;
+  reasoning?: string | undefined;
   isLoading: boolean;
   onGenerate: () => Promise<void>;
   error?: Error | null;
@@ -17,6 +19,7 @@ export interface BaseLLMChatProps {
 export function BaseLLMChat({
   title,
   completion,
+  reasoning,
   isLoading,
   onGenerate,
   error,
@@ -40,12 +43,29 @@ export function BaseLLMChat({
         {title}
       </h4>
       <div className="space-y-2">
-        <Textarea
-          value={completion || ""}
-          className={`h-32 ${className}`}
-          placeholder={`${title}生成的回复...`}
-          readOnly
-        />
+        {/* 推理过程 */}
+        {reasoning && (
+          <div className="rounded-md bg-gray-50 p-3">
+            <h5 className="mb-2 text-xs font-medium text-gray-500">推理过程</h5>
+            <pre className="whitespace-pre-wrap break-words text-xs text-gray-600">
+              {reasoning}
+            </pre>
+          </div>
+        )}
+
+        {/* 最终回答 */}
+        <div className={cn("space-y-2", reasoning && "border-t border-gray-100 pt-2")}>
+          {reasoning && (
+            <h5 className="text-xs font-medium text-gray-500">最终回答</h5>
+          )}
+          <Textarea
+            value={completion || ""}
+            className={`h-32 ${className}`}
+            placeholder={`${title}生成的回复...`}
+            readOnly
+          />
+        </div>
+
         <div className="flex gap-2">
           <Button
             className={`flex-1 ${buttonClassName}`}
