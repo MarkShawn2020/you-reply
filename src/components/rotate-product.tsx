@@ -5,7 +5,7 @@ const ProductShowcase = () => {
   const [rotateY, setRotateY] = useState(-20);
   const [backgroundColor, setBackgroundColor] = useState('#2866EC');
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
