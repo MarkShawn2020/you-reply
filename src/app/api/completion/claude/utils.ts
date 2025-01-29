@@ -1,7 +1,6 @@
 import { createAnthropic } from '@ai-sdk/anthropic';
-import { HttpsProxyAgent } from 'https-proxy-agent';
-import nodeFetch from 'node-fetch';
-import type { RequestInfo, RequestInit, Response } from 'node-fetch';
+import { fetch, ProxyAgent } from 'undici';
+
 
 /**
  * 创建支持代理的 Anthropic 客户端
@@ -9,18 +8,18 @@ import type { RequestInfo, RequestInit, Response } from 'node-fetch';
  */
 export function createAnthropicWithProxy(proxyUrl: string) {
     // 创建代理 agent
-    const proxyAgent = new HttpsProxyAgent(proxyUrl);
-    
-    // 创建自定义 fetch 实现
-    const fetchWithProxy = (url: RequestInfo, init?: RequestInit): Promise<Response> => {
-        return nodeFetch(url, {
-            ...init,
-            agent: proxyAgent,
-        });
-    };
+const dispatcher = new ProxyAgent(proxyUrl)
+
     
     // 创建支持代理的 Anthropic 客户端
     return createAnthropic({
-        fetch: fetchWithProxy as unknown as typeof fetch,
+        // @ts-ignore
+        fetch: async (req, options) => {
+            // @ts-ignore
+            let res =  await fetch(req, {
+              ...options, dispatcher
+            });
+            return res;
+          } 
     });
 }
