@@ -6,28 +6,19 @@ import { useCallback, useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 
-interface ImageUploadProps {
+export interface ImageUploadProps {
   onImageUpload: (file: File) => void;
   className?: string;
   error?: string | null;
   isAnalyzing?: boolean;
 }
 
-interface PreviewImage {
-  file: File;
-  url: string;
-}
-
-export function ImageUpload({
-  onImageUpload,
-  className,
-  error,
-  isAnalyzing,
-}: ImageUploadProps) {
-  const [images, setImages] = useState<PreviewImage[]>([]);
+export function ImageUpload({ onImageUpload, className = '', error, isAnalyzing }: ImageUploadProps) {
+  const [images, setImages] = useState<{ file: File; url: string }[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
 
   // 创建预览URL
-  const createPreview = useCallback((file: File): PreviewImage => {
+  const createPreview = useCallback((file: File): { file: File; url: string } => {
     return {
       file,
       url: URL.createObjectURL(file),
@@ -54,7 +45,7 @@ export function ImageUpload({
 
       // 如果有新文件，使用最后一个文件进行分析
       if (files.length > 0) {
-        onImageUpload(files[files.length - 1]);
+        onImageUpload(files[files.length - 1]!);
       }
     },
     [cleanupPreviews, createPreview, onImageUpload],
@@ -77,13 +68,13 @@ export function ImageUpload({
 
   const handleRetry = useCallback(() => {
     if (images.length > 0) {
-      onImageUpload(images[images.length - 1].file);
+      onImageUpload(images[images.length - 1]!.file);
     }
   }, [images, onImageUpload]);
 
   const handleRemoveImage = useCallback(
     (index: number) => {
-      const imageToRemove = images[index];
+      const imageToRemove = images[index]!;
       URL.revokeObjectURL(imageToRemove.url);
       setImages((prev) => prev.filter((_, i) => i !== index));
     },
@@ -97,8 +88,8 @@ export function ImageUpload({
 
       const imageFiles: File[] = [];
       for (let i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf('image') !== -1) {
-          const file = items[i].getAsFile();
+        if (items[i]!.type.indexOf('image') !== -1) {
+          const file = items[i]!.getAsFile();
           if (file) {
             imageFiles.push(file);
           }

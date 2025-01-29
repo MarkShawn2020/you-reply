@@ -9,6 +9,7 @@ import {
   generateReply,
   getLatestBackgroundInfo,
   saveBackgroundInfo,
+  saveChatContext,
 } from './actions';
 import { copyToClipboard } from '@/lib/utils';
 import { PageContainer } from './_components/page-container';
@@ -20,6 +21,7 @@ import {
   Upload,
   Sparkles,
   Zap,
+  Settings2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ErrorAlert } from './_components/error-alert';
@@ -28,7 +30,11 @@ import { SectionCard } from './_components/section-card';
 import { getErrorMessage } from '@/lib/error';
 import { FeatureCard } from './_components/feature-card';
 import { HistoryDrawer } from './_components/history-drawer';
-import { BackgroundInfoDialog } from './_components/background-info-dialog';
+import { BackgroundInfoEditor } from './_components/background-info-editor';
+import { ContactInfoEditor } from './_components/contact-info-editor';
+import { PromptEditorDialog } from './_components/prompt-editor-dialog';
+import { useAtom } from 'jotai';
+import { imagePromptAtom, replyPromptAtom } from '@/store/prompts';
 
 export default function HomePage() {
   const [parsedText, setParsedText] = useState('');
@@ -37,7 +43,20 @@ export default function HomePage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [backgroundInfo, setBackgroundInfo] = useState('');
+  const [sessionId, setSessionId] = useState('');
+  const [contactInfo, setContactInfo] = useState<{
+    name: string;
+    notes: string;
+  }>({ name: '', notes: '' });
+  const [imagePrompt, setImagePrompt] = useAtom(imagePromptAtom);
+  const [replyPrompt, setReplyPrompt] = useAtom(replyPromptAtom);
+  const [isPromptEditorOpen, setIsPromptEditorOpen] = useState(false);
   const { toast } = useToast();
+
+  // 生成新的会话 ID
+  useEffect(() => {
+    setSessionId(crypto.randomUUID());
+  }, []);
 
   // 加载最新的背景信息
   useEffect(() => {
@@ -58,7 +77,7 @@ export default function HomePage() {
     try {
       setError(null);
       setIsAnalyzing(true);
-      const result = await analyzeImage(file);
+      const result = await analyzeImage(file, imagePrompt);
       setParsedText(result);
       toast({
         title: '图片解析成功',
@@ -90,7 +109,7 @@ export default function HomePage() {
     try {
       setError(null);
       setIsGenerating(true);
-      const reply = await generateReply(parsedText);
+      const reply = await generateReply(parsedText, sessionId, replyPrompt);
       setGeneratedReply(reply);
       toast({
         title: '回复生成成功',
@@ -106,6 +125,26 @@ export default function HomePage() {
       });
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleSaveContactInfo = async (name: string, notes: string) => {
+    try {
+      await saveChatContext(sessionId, name, notes);
+      setContactInfo({ name, notes });
+    } catch (error) {
+      console.error('Failed to save contact info:', error);
+      throw error;
+    }
+  };
+
+  const handleSaveBackgroundInfo = async (content: string) => {
+    try {
+      await saveBackgroundInfo(content);
+      setBackgroundInfo(content);
+    } catch (error) {
+      console.error('Failed to save background info:', error);
+      throw error;
     }
   };
 
@@ -134,146 +173,109 @@ export default function HomePage() {
     }
   };
 
-  const handleSaveBackgroundInfo = async (content: string) => {
-    try {
-      await saveBackgroundInfo(content);
-      setBackgroundInfo(content);
-    } catch (error) {
-      console.error('Failed to save background info:', error);
-      throw error;
-    }
-  };
-
   return (
     <PageContainer>
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-8 text-center">
-          <div className="flex items-center justify-center gap-4">
-            <h1 className="bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-3xl font-bold tracking-tight text-transparent">
-              微信回复助手
-            </h1>
-            <HistoryDrawer />
+      <div className="mx-auto max-w-4xl space-y-8 p-8">
+
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold">微信回复助手</h1>
+            <div className="flex items-center gap-2">
+              <PromptEditorDialog
+                open={isPromptEditorOpen}
+                onOpenChange={setIsPromptEditorOpen}
+                imagePrompt={imagePrompt}
+                replyPrompt={replyPrompt}
+                onSave={(newImagePrompt, newReplyPrompt) => {
+                  setImagePrompt(newImagePrompt);
+                  setReplyPrompt(newReplyPrompt);
+                }}
+              />
+            </div>
           </div>
-          <p className="mt-2 text-lg text-gray-600">
-            上传微信聊天截图，快速生成合适的回复
-          </p>
-        </div>
 
-        {/* 功能特点 */}
-        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <FeatureCard
-            icon={Upload}
-            title="轻松上传"
-            description="支持拖拽上传聊天截图，自动识别对话内容"
-          />
-          <FeatureCard
-            icon={Sparkles}
-            title="智能分析"
-            description="基于 Claude API 的强大分析能力，准确理解对话场景"
-          />
-          <FeatureCard
-            icon={Zap}
-            title="快速生成"
-            description="一键生成得体、自然的回复，节省思考时间"
+          <div className="flex flex-col gap-4">
+          <BackgroundInfoEditor
+            initialValue={backgroundInfo}
+            onSave={handleSaveBackgroundInfo}
           />
         </div>
 
-        {error && <ErrorAlert message={error} className="mb-6" />}
+          <div className="grid gap-6">
+            <SectionCard icon={Upload} title="输入聊天记录">
+              <div className="space-y-4">
+                <ImageUpload 
+                  onImageUpload={handleImageUpload}
+                  error={error}
+                  isAnalyzing={isAnalyzing}
+                />
+              </div>
+            </SectionCard>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* 左侧：上传和解析区域 */}
-          <div className="space-y-6">
-            <ImageUpload
-              onImageUpload={handleImageUpload}
-              className="bg-white shadow-sm"
-              error={error}
-              isAnalyzing={isAnalyzing}
-            />
-
-            <SectionCard icon={Bot} title="解析结果">
-              {isAnalyzing ? (
-                <LoadingSkeleton progressText="正在解析图片..." />
-              ) : (
-                <div className="space-y-3">
+            {parsedText && (
+              <>
+                <SectionCard icon={MessageCircle} title="解析结果">
                   <Textarea
                     value={parsedText}
                     onChange={(e) => setParsedText(e.target.value)}
-                    placeholder="等待图片解析..."
-                    className="min-h-[200px] resize-none"
+                    className="min-h-[200px]"
+                    placeholder="解析的聊天记录将显示在这里..."
                   />
-                  <div className="text-sm text-gray-500">
-                    提示：可以编辑解析结果以修正或补充内容
-                  </div>
-                </div>
-              )}
-            </SectionCard>
-          </div>
+                </SectionCard>
 
-          {/* 右侧：回复生成区域 */}
-          <div className="space-y-6">
-            <SectionCard
-              icon={Bot}
-              title="补充背景"
-              action={
-                <BackgroundInfoDialog
-                  initialContent={backgroundInfo}
-                  onSave={handleSaveBackgroundInfo}
-                />
-              }
-            >
-              <div className="space-y-3">
-                <p className="text-sm text-gray-500">
-                  {backgroundInfo ? (
-                    backgroundInfo
+                <SectionCard
+                  icon={Wand2}
+                  title="生成的回复"
+                  action={
+                    <div className="flex items-center gap-2">
+                                           {generatedReply && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleCopy}
+                        >
+                          <Copy className="mr-2 h-4 w-4" />
+                          复制
+                        </Button>
+                      )}
+                      
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={handleGenerateReply}
+                        disabled={isGenerating}
+                      >
+                        {isGenerating ? (
+                          <>
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            生成中...
+                          </>
+                        ) : (
+                          <>
+                            <Wand2 className="mr-2 h-4 w-4" />
+                            生成回复
+                          </>
+                        )}
+                      </Button>
+ 
+                    </div>
+                  }
+                >
+                  {isGenerating ? (
+                    <LoadingSkeleton />
                   ) : (
-                    <span className="italic text-gray-400">
-                      未设置补充背景信息，点击右上角按钮添加
-                    </span>
+                    <Textarea
+                      value={generatedReply}
+                      onChange={(e) => setGeneratedReply(e.target.value)}
+                      className="min-h-[200px]"
+                      placeholder="生成的回复将显示在这里..."
+                    />
                   )}
-                </p>
-              </div>
-            </SectionCard>
+                </SectionCard>
+              </>
+            )}
 
-            <SectionCard icon={MessageCircle} title="生成的回复">
-              {isGenerating ? (
-                <LoadingSkeleton
-                  showProgress
-                  progressText="正在生成回复..."
-                  progressValue={33}
-                />
-              ) : (
-                <div className="space-y-3">
-                  <Textarea
-                    value={generatedReply}
-                    onChange={(e) => setGeneratedReply(e.target.value)}
-                    placeholder="点击生成回复按钮开始生成..."
-                    className="min-h-[200px] resize-none"
-                  />
-                  <div className="text-sm text-gray-500">
-                    提示：可以编辑生成的回复以调整语气和内容
-                  </div>
-                </div>
-              )}
-              <div className="flex justify-end gap-3 py-2">
-                <Button
-                  variant="outline"
-                  onClick={handleCopy}
-                  disabled={!generatedReply || isGenerating}
-                  className="gap-2"
-                >
-                  <Copy className="h-4 w-4" />
-                  复制
-                </Button>
-                <Button
-                  onClick={handleGenerateReply}
-                  disabled={!parsedText || isGenerating}
-                  className="gap-2"
-                >
-                  <Wand2 className="h-4 w-4" />
-                  {isGenerating ? '生成中...' : '重新生成'}
-                </Button>
-              </div>
-            </SectionCard>
+            {error && <ErrorAlert error={error} />}
           </div>
         </div>
       </div>

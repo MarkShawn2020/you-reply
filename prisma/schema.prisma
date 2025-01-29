@@ -17,6 +17,17 @@ model BackgroundInfo {
     updatedAt DateTime @updatedAt
 }
 
+model ChatContext {
+    id           String   @id @default(cuid())
+    contactName  String   // 聊天对象名称
+    contactNotes String   @db.Text  // 聊天对象备注信息
+    sessionId    String   // 聊天会话ID，用于关联同一次对话
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+
+    @@index([sessionId])
+}
+
 model Post {
     id        Int      @id @default(autoincrement())
     name      String

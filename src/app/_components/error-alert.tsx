@@ -1,22 +1,17 @@
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
-interface ErrorAlertProps {
-  title?: string;
-  message: string;
-  className?: string;
+export interface ErrorAlertProps {
+  error: string;
 }
 
-export function ErrorAlert({
-  title = '出错了',
-  message,
-  className,
-}: ErrorAlertProps) {
+export function ErrorAlert({ error }: ErrorAlertProps) {
+  if (!error) return null;
+
   return (
-    <Alert variant="destructive" className={className}>
-      <ExclamationTriangleIcon className="h-4 w-4" />
-      <AlertTitle>{title}</AlertTitle>
-      <AlertDescription>{message}</AlertDescription>
+    <Alert variant="destructive">
+      <AlertCircle className="h-4 w-4" />
+      <AlertDescription>{error}</AlertDescription>
     </Alert>
   );
 }
