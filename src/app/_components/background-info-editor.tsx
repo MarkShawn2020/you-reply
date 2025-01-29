@@ -18,13 +18,13 @@ export function BackgroundInfoEditor({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   return (
-    
+    <>
       <Card className={`relative p-4 ${className}`}>
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-lg font-semibold">背景信息</h3>
           <BackgroundInfoDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
         initialContent={initialValue}
         onSave={onSave}
       />
@@ -35,6 +35,6 @@ export function BackgroundInfoEditor({
       </Card>
 
 
-    
+    </>
   );
 }
