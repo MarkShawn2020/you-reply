@@ -12,7 +12,6 @@ import {
   saveChatContext,
 } from './actions';
 import { copyToClipboard } from '@/lib/utils';
-import { PageContainer } from './_components/page-container';
 import {
   Bot,
   Copy,
@@ -21,8 +20,6 @@ import {
   Upload,
   Sparkles,
   Zap,
-  Settings2,
-  Github,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ErrorAlert } from './_components/error-alert';
@@ -32,7 +29,6 @@ import { getErrorMessage } from '@/lib/error';
 import { FeatureCard } from './_components/feature-card';
 import { HistoryDrawer } from './_components/history-drawer';
 import { BackgroundInfoEditor } from './_components/background-info-editor';
-import { ContactInfoEditor } from './_components/contact-info-editor';
 import { PromptEditorDialog } from './_components/prompt-editor-dialog';
 import { useAtom } from 'jotai';
 import { imagePromptAtom, replyPromptAtom } from '@/store/prompts';
@@ -182,7 +178,7 @@ export default function HomePage() {
                         className="h-auto py-4 px-4 flex flex-col gap-2"
                         onClick={async () => {
                           setBackgroundInfo(scenario.prompt);
-                          await saveBackgroundInfo(scenario.prompt);
+                          void saveBackgroundInfo(scenario.prompt);
                           toast({
                             title: `已选择${scenario.label}场景`,
                             duration: 2000,
@@ -202,7 +198,7 @@ export default function HomePage() {
                     initialValue={backgroundInfo}
                     onSave={async (value) => {
                       if (!sessionId) return;
-                      await saveBackgroundInfo(value);
+                      void saveBackgroundInfo(value);
                       setBackgroundInfo(value);
                       toast({
                         title: '场景信息已保存',
@@ -238,7 +234,7 @@ export default function HomePage() {
                       
                       // Save background info if not already set
                       if (backgroundInfo) {
-                        await saveBackgroundInfo(backgroundInfo);
+                        void saveBackgroundInfo(backgroundInfo);
                       }
                     } catch (e) {
                       setError(getErrorMessage(e));
@@ -311,11 +307,13 @@ export default function HomePage() {
                             variant="outline"
                             className="gap-2"
                             onClick={() => {
-                              copyToClipboard(generatedReply);
-                              toast({
-                                title: '已复制到剪贴板',
-                                duration: 2000,
-                              });
+                              void copyToClipboard(generatedReply)
+                              .then(() => {
+                                toast({
+                                  title: '已复制到剪贴板',
+                                  duration: 2000,
+                                });
+                              })
                             }}
                           >
                             <Copy className="h-4 w-4" />

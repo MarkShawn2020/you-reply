@@ -1,9 +1,21 @@
 'use server';
 
 import { callClaude, callClaudeWithImage } from '@/lib/claude';
-import { callDeepSeek } from '@/lib/deepseek';
 import { prisma } from '@/lib/prisma';
-import { IMAGE_ANALYSIS_PROMPT, REPLY_GENERATION_PROMPT } from '@/lib/prompts';
+
+interface BackgroundInfo {
+  id: string;
+  content: string;
+  updatedAt: Date;
+}
+
+interface ChatContext {
+  id: string;
+  sessionId: string;
+  contactName: string;
+  contactNotes: string;
+  updatedAt: Date;
+}
 
 export async function analyzeImage(
   file: File,
@@ -69,7 +81,7 @@ export async function saveBackgroundInfo(content: string) {
   }
 }
 
-export async function getLatestBackgroundInfo(): Promise<any> {
+export async function getLatestBackgroundInfo(): Promise<BackgroundInfo | null> {
   try {
     const backgroundInfo = await prisma.backgroundInfo.findFirst({
       orderBy: { updatedAt: 'desc' },
@@ -85,7 +97,7 @@ export async function saveChatContext(
   sessionId: string,
   contactName: string,
   contactNotes: string,
-): Promise<any> {
+): Promise<ChatContext> {
   try {
     const chatContext = await prisma.chatContext.create({
       data: {
@@ -101,7 +113,7 @@ export async function saveChatContext(
   }
 }
 
-export async function getLatestChatContext(sessionId: string): Promise<any> {
+export async function getLatestChatContext(sessionId: string): Promise<ChatContext | null> {
   try {
     const chatContext = await prisma.chatContext.findFirst({
       where: { sessionId },

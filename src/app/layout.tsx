@@ -5,6 +5,7 @@ import '~/styles/globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Button } from '@/components/ui/button';
 import { Github, MessageCircle } from 'lucide-react';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: '微信回复助手 - 智能生成合适的回复',
@@ -31,16 +32,18 @@ export default function RootLayout({
           <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
             <div className="container flex h-16 items-center justify-between">
               <div className="flex items-center gap-6">
-                <a href="/" className="flex items-center gap-3 transition-colors hover:opacity-80">
+                <Link href="/" className="flex items-center gap-3 transition-colors hover:opacity-80">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-sm">
                     <MessageCircle className="h-5 w-5" />
                   </div>
-                  <span className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">微信回复助手</span>
-                </a>
+                  <span className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-900 bg-clip-text text-transparent">
+                    智能回复
+                  </span>
+                </Link>
                 <nav className="hidden md:flex items-center space-x-6">
-                  <a href="#features" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">功能特点</a>
-                  <a href="#how-it-works" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">使用方法</a>
-                  <a href="#pricing" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">价格方案</a>
+                  <Link href="#features" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">功能特点</Link>
+                  <Link href="#how-it-works" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">使用方法</Link>
+                  <Link href="#pricing" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">价格方案</Link>
                 </nav>
               </div>
               <div className="flex items-center gap-4">
@@ -69,25 +72,25 @@ export default function RootLayout({
                 <div className="space-y-3">
                   <h3 className="font-semibold text-gray-900">快速链接</h3>
                   <ul className="space-y-2 text-sm">
-                    <li><a href="#features" className="text-gray-600 hover:text-gray-900">功能特点</a></li>
-                    <li><a href="#pricing" className="text-gray-600 hover:text-gray-900">价格方案</a></li>
-                    <li><a href="#faq" className="text-gray-600 hover:text-gray-900">常见问题</a></li>
+                    <li><Link href="#features" className="text-gray-600 hover:text-gray-900">功能特点</Link></li>
+                    <li><Link href="#pricing" className="text-gray-600 hover:text-gray-900">价格方案</Link></li>
+                    <li><Link href="#faq" className="text-gray-600 hover:text-gray-900">常见问题</Link></li>
                   </ul>
                 </div>
                 <div className="space-y-3">
                   <h3 className="font-semibold text-gray-900">联系我们</h3>
                   <ul className="space-y-2 text-sm">
-                    <li><a href="mailto:support@example.com" className="text-gray-600 hover:text-gray-900">客户支持</a></li>
-                    <li><a href="#" className="text-gray-600 hover:text-gray-900">商务合作</a></li>
+                    <li><Link href="mailto:support@example.com" className="text-gray-600 hover:text-gray-900">客户支持</Link></li>
+                    <li><Link href="#" className="text-gray-600 hover:text-gray-900">商务合作</Link></li>
                   </ul>
                 </div>
                 <div className="space-y-3">
                   <h3 className="font-semibold text-gray-900">关注我们</h3>
                   <div className="flex space-x-4">
-                    <a href="#" className="text-gray-600 hover:text-gray-900">
+                    <Link href="#" className="text-gray-600 hover:text-gray-900">
                       <span className="sr-only">微信公众号</span>
                       <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8.5,13.5A1.5,1.5 0 0,1 7,12A1.5,1.5 0 0,1 8.5,10.5A1.5,1.5 0 0,1 10,12A1.5,1.5 0 0,1 8.5,13.5M15.5,13.5A1.5,1.5 0 0,1 14,12A1.5,1.5 0 0,1 15.5,10.5A1.5,1.5 0 0,1 17,12A1.5,1.5 0 0,1 15.5,13.5M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg>
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </div>

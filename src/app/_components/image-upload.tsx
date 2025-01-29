@@ -4,9 +4,10 @@ import { cn } from '@/lib/utils';
 import { Upload, AlertCircle, RefreshCw, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 
-export interface ImageUploadProps {
+interface ImageUploadProps {
   onImageUpload: (file: File) => void;
   className?: string;
   error?: string | null;
@@ -14,20 +15,17 @@ export interface ImageUploadProps {
 }
 
 export function ImageUpload({ onImageUpload, className = '', error, isAnalyzing }: ImageUploadProps) {
-  const [images, setImages] = useState<{ file: File; url: string }[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
+  const [images, setImages] = useState<{ file: File; preview: string }[]>([]);
 
-  // 创建预览URL
-  const createPreview = useCallback((file: File): { file: File; url: string } => {
+  const createPreview = useCallback((file: File): { file: File; preview: string } => {
     return {
       file,
-      url: URL.createObjectURL(file),
+      preview: URL.createObjectURL(file),
     };
   }, []);
 
-  // 清理预览URL
   const cleanupPreviews = useCallback(() => {
-    images.forEach((image) => URL.revokeObjectURL(image.url));
+    images.forEach((image) => URL.revokeObjectURL(image.preview));
   }, [images]);
 
   useEffect(() => {
@@ -36,14 +34,10 @@ export function ImageUpload({ onImageUpload, className = '', error, isAnalyzing 
 
   const handleFiles = useCallback(
     (files: File[]) => {
-      // 清理旧的预览
       cleanupPreviews();
-      
-      // 创建新的预览
       const newImages = files.map(createPreview);
       setImages(newImages);
 
-      // 如果有新文件，使用最后一个文件进行分析
       if (files.length > 0) {
         onImageUpload(files[files.length - 1]!);
       }
@@ -72,10 +66,10 @@ export function ImageUpload({ onImageUpload, className = '', error, isAnalyzing 
     }
   }, [images, onImageUpload]);
 
-  const handleRemoveImage = useCallback(
+  const removeImage = useCallback(
     (index: number) => {
       const imageToRemove = images[index]!;
-      URL.revokeObjectURL(imageToRemove.url);
+      URL.revokeObjectURL(imageToRemove.preview);
       setImages((prev) => prev.filter((_, i) => i !== index));
     },
     [images],
@@ -87,9 +81,9 @@ export function ImageUpload({ onImageUpload, className = '', error, isAnalyzing 
       if (!items || isAnalyzing) return;
 
       const imageFiles: File[] = [];
-      for (let i = 0; i < items.length; i++) {
-        if (items[i]!.type.indexOf('image') !== -1) {
-          const file = items[i]!.getAsFile();
+      for (const item of Array.from(items)) {
+        if (item.type.includes('image')) {
+          const file = item.getAsFile();
           if (file) {
             imageFiles.push(file);
           }
@@ -107,9 +101,6 @@ export function ImageUpload({ onImageUpload, className = '', error, isAnalyzing 
 
   return (
     <div className={cn('space-y-4', className)}>
-
-
-      {/* 上传区域 */}
       <div
         {...getRootProps()}
         className={cn(
@@ -183,24 +174,22 @@ export function ImageUpload({ onImageUpload, className = '', error, isAnalyzing 
         </div>
       </div>
 
-            {/* 预览区域 */}
-            {images.length > 0 && (
+      {images.length > 0 && (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
           {images.map((image, index) => (
-            <div
-              key={image.url}
-              className="group relative aspect-[4/3] overflow-hidden rounded-lg border bg-gray-50"
-            >
-              <img
-                src={image.url}
+            <div key={index} className="relative">
+              <Image
+                src={image.preview}
                 alt={`Preview ${index + 1}`}
-                className="h-full w-full object-contain"
+                width={200}
+                height={200}
+                className="object-cover rounded-lg"
               />
               <button
-                onClick={() => handleRemoveImage(index)}
-                className="absolute right-2 top-2 rounded-full bg-gray-900/20 p-1 opacity-0 transition-opacity hover:bg-gray-900/40 group-hover:opacity-100"
+                className="absolute top-2 right-2 p-1 bg-white/80 rounded-full hover:bg-white"
+                onClick={() => removeImage(index)}
               >
-                <X className="h-4 w-4 text-white" />
+                <X className="h-4 w-4" />
               </button>
             </div>
           ))}

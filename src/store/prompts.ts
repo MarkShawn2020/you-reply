@@ -1,4 +1,3 @@
-import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
 import { IMAGE_ANALYSIS_PROMPT, REPLY_GENERATION_PROMPT } from '@/lib/prompts';
 

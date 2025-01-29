@@ -90,7 +90,7 @@ export function ContactInfoDialog({
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        {trigger || (
+        {trigger ?? (
           <Button variant="outline" size="sm" className="gap-2">
             <HelpCircle className="h-4 w-4" />
             聊天对象信息
