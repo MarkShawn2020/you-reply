@@ -1,29 +1,47 @@
-# Create T3 App
+# 微信回复助手
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+一个智能的微信聊天回复生成工具，帮助用户快速生成得体、自然的回复。
 
-## What's next? How do I make an app with this?
+## 产品特点
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+- 🤖 **智能分析** - 自动识别对话场景和语境，生成符合情境的回复
+- 🌈 **多场景支持** - 适用于工作沟通、社交聊天、客户服务等多种场景
+- ⚡ **快速响应** - 秒级生成回复，提高沟通效率
+- 🎨 **场景定制** - 支持预设场景和自定义场景，满足不同需求
+- 📝 **结果编辑** - 支持编辑识别结果和生成的回复，保持灵活性
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+## 技术栈
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+- 🎯 [Next.js](https://nextjs.org) - React 框架
+- 🎨 [Tailwind CSS](https://tailwindcss.com) - 样式框架
+- 🔌 [shadcn/ui](https://ui.shadcn.com/) - UI 组件库
+- 💾 [Jotai](https://jotai.org/) - 状态管理
+- 🌐 [Server Actions](https://nextjs.org/docs/app/api-reference/functions/server-actions) - API 实现
 
-## Learn More
+## 开发指南
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+1. 安装依赖：
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+```bash
+pnpm install
+```
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+2. 启动开发服务器：
 
-## How do I deploy this?
+```bash
+pnpm dev
+```
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+3. 在浏览器中打开 [http://localhost:3000](http://localhost:3000)
+
+## 使用方法
+
+1. 选择聊天场景（工作沟通、朋友聊天等）
+2. 上传微信聊天截图
+3. 等待系统分析并生成回复
+4. 根据需要编辑回复内容
+5. 复制回复文本到剪贴板
+
+## 贡献指南
+
+欢迎提交 Issue 和 Pull Request！
