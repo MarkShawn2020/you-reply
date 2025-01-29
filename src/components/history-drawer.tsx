@@ -9,14 +9,15 @@ import {
 } from '@/components/ui/sheet';
 import { History } from 'lucide-react';
 
-export function HistoryDrawer() {
+interface HistoryDrawerProps {
+  children: React.ReactNode;
+}
+
+export function HistoryDrawer({ children }: HistoryDrawerProps) {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <History className="h-4 w-4" />
-          <span>历史记录</span>
-        </Button>
+        {children}
       </SheetTrigger>
       <SheetContent>
         <SheetHeader>

@@ -2,37 +2,20 @@
 
 import { useToast } from "@/hooks/use-toast";
 import { imagePromptAtom, replyPromptAtom } from "@/store/prompts";
-import {
-  customScenariosAtom,
-  type CustomScenario,
-} from "@/store/custom-scenario";
+import { customScenariosAtom } from "@/store/custom-scenario";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { ChatScenarioSection } from "~/components/chatScenarioSection";
 import { GenReplySection } from "~/components/genReplySection";
 import { ImageUploadSection } from "~/components/imageUploadSection";
 import { PromptEditorDialog } from "~/components/prompt-editor-dialog";
 import { CustomScenarioDialog } from "~/components/custom-scenario-dialog";
+import { ScenarioSelect } from "~/components/scenario-select";
 import { useSearchParams } from "next/navigation";
 import { useAtom } from "jotai";
 import { ClaudeChat } from "~/components/claude-chat";
 import { SectionCard } from "~/components/section-card";
 import { Button } from "~/components/ui/button";
-import { Pen, Settings, Upload, Trash2, MoreVertical } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  SelectSeparator,
-} from "~/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
-import { atomWithStorage } from "jotai/utils";
+import { Pen, Upload, Trash2, MoreVertical } from "lucide-react";
 import {
   getLatestBackgroundInfo,
   saveBackgroundInfo,
@@ -40,16 +23,6 @@ import {
 } from "../actions";
 import { DeepseekChat } from "~/components/deepseek-chat";
 
-const promptEditorOpenAtom = atomWithStorage("promptEditorOpen", false);
-
-const defaultScenarios = [
-  { id: "spring-festival", label: "春节拜年" },
-  { id: "work", label: "回复领导" },
-  { id: "customer", label: "回复客户" },
-  { id: "social", label: "社交聊天"   },
-  { id: "social-back", label: "分手挽回" },
-  { id: "new", label: "新建场景" },
-];
 
 export default function AppPage() {
   const [parsedText, setParsedText] = useState("");
@@ -58,64 +31,8 @@ export default function AppPage() {
   const [sessionId, setSessionId] = useState("");
   const [imagePrompt, setImagePrompt] = useAtom(imagePromptAtom);
   const [replyPrompt, setReplyPrompt] = useAtom(replyPromptAtom);
-  const [isPromptEditorOpen, setIsPromptEditorOpen] =
-    useAtom(promptEditorOpenAtom);
-  const [isCustomScenarioOpen, setIsCustomScenarioOpen] = useState(false);
   const [customScenarios, setCustomScenarios] = useAtom(customScenariosAtom);
   const { toast } = useToast();
-
-  // 合并默认场景和自定义场景
-  const allScenarios = useMemo(() => {
-    return [
-      ...defaultScenarios.filter((s) => s.id !== "new"),
-      ...customScenarios,
-      { ...defaultScenarios.find((s) => s.id === "new")! },
-    ];
-  }, [customScenarios]);
-
-  // 处理场景选择的回调
-  const handleScenarioChange = useCallback(
-    (value: string) => {
-      const selectedScenario = allScenarios.find((s) => s.label === value);
-      if (!selectedScenario) return;
-
-      if (selectedScenario.id === "new") {
-        setIsCustomScenarioOpen(true);
-      } else {
-        setBackground(value);
-        void saveBackgroundInfo(value);
-        toast({
-          title: `已选择${selectedScenario.label}场景`,
-          duration: 2000,
-        });
-      }
-    },
-    [allScenarios, toast],
-  );
-
-  // 添加新场景
-  const handleAddScenario = useCallback(
-    (prompt: string) => {
-      const newScenario: CustomScenario = {
-        id: `custom_${Date.now()}`,
-        label: prompt,
-        prompt,
-      };
-      setCustomScenarios((prev) => [...prev, newScenario]);
-      setBackground(prompt);
-      void saveBackgroundInfo(prompt);
-    },
-    [setCustomScenarios],
-  );
-
-  // 删除场景
-  const handleDeleteScenario = useCallback((scenarioId: string) => {
-    setCustomScenarios((prev) => prev.filter((s) => s.id !== scenarioId));
-    toast({
-      title: "场景已删除",
-      duration: 2000,
-    });
-  }, [setCustomScenarios, toast]);
 
   const genReplyPrompt = `
   这是一段微信聊天记录上下文：
@@ -139,23 +56,6 @@ export default function AppPage() {
   - 直接输出结果（无需解释），以方便用户直接复制粘贴
 `;
 
-  // 添加快捷键支持
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        (e.metaKey || e.ctrlKey) &&
-        e.shiftKey &&
-        e.key.toLowerCase() === "p"
-      ) {
-        e.preventDefault();
-        setIsPromptEditorOpen(true);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [setIsPromptEditorOpen]);
-
   // 生成新的会话 ID
   useEffect(() => {
     setSessionId(crypto.randomUUID());
@@ -176,6 +76,27 @@ export default function AppPage() {
     void loadBackgroundInfo();
   }, []);
 
+  // 添加新场景
+  const handleAddScenario = useCallback((prompt: string) => {
+    const newScenario = {
+      id: `custom_${Date.now()}`,
+      label: prompt,
+      prompt,
+    };
+    setCustomScenarios((prev) => [...prev, newScenario]);
+    setBackground(prompt);
+    void saveBackgroundInfo(prompt);
+  }, [setCustomScenarios]);
+
+  // 删除场景
+  const handleDeleteScenario = useCallback((scenarioId: string) => {
+    setCustomScenarios((prev) => prev.filter((s) => s.id !== scenarioId));
+    toast({
+      title: "场景已删除",
+      duration: 2000,
+    });
+  }, [setCustomScenarios, toast]);
+
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="container">
@@ -187,67 +108,19 @@ export default function AppPage() {
               title="Step 1. 上传聊天截图"
               className="bg-white shadow-lg"
               icon={Upload}
+              action={
+                <ScenarioSelect
+                  value={background}
+                  customScenarios={customScenarios}
+                  onValueChange={(value) => {
+                    setBackground(value);
+                    void saveBackgroundInfo(value);
+                  }}
+                  onNewScenario={handleAddScenario}
+                  onDeleteScenario={handleDeleteScenario}
+                />
+              }
             >
-              <div className="mb-4 flex items-center justify-between">
-                <Select value={background} onValueChange={handleScenarioChange}>
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="选择对话场景" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allScenarios.map((scenario) =>
-                      scenario.id === "new" ? (
-                        <div key={scenario.id}>
-                          <SelectSeparator className="my-2" />
-                          <SelectItem
-                            value={scenario.label}
-                            className="text-muted-foreground"
-                          >
-                            {scenario.label}
-                          </SelectItem>
-                        </div>
-                      ) : (
-                        <div key={scenario.id} className="relative">
-                          <SelectItem
-                            value={scenario.label}
-                            className={
-                              scenario.id.startsWith("custom_")
-                                ? "text-primary pr-8"
-                                : ""
-                            }
-                          >
-                            {scenario.label}
-                          </SelectItem>
-                          {scenario.id.startsWith("custom_") && (
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 p-0 hover:bg-muted"
-                                  >
-                                    <MoreVertical className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                  <DropdownMenuItem
-                                    className="text-destructive focus:text-destructive"
-                                    onClick={() => handleDeleteScenario(scenario.id)}
-                                  >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    删除场景
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          )}
-                        </div>
-                      ),
-                    )}
-                  </SelectContent>
-                </Select>
-
-              </div>
               <ImageUploadSection
                 userId={sessionId}
                 analyzing={false}
@@ -283,37 +156,6 @@ export default function AppPage() {
           </div>
         </div>
       </div>
-
-      {/* Settings Panel */}
-      <PromptEditorDialog
-        imagePrompt={imagePrompt}
-        replyPrompt={replyPrompt}
-        isOpen={isPromptEditorOpen}
-        onOpenChange={setIsPromptEditorOpen}
-        onSave={(newImagePrompt, newReplyPrompt) => {
-          setImagePrompt(newImagePrompt);
-          setReplyPrompt(newReplyPrompt);
-          toast({
-            title: "提示词已更新",
-            duration: 2000,
-          });
-        }}
-      />
-
-      {/* Custom Scenario Dialog */}
-      <CustomScenarioDialog
-        isOpen={isCustomScenarioOpen}
-        onOpenChange={setIsCustomScenarioOpen}
-        initialValue=""
-        onSave={(prompt) => {
-          handleAddScenario(prompt);
-          toast({
-            title: "场景已保存",
-            description: "新场景已添加到列表中",
-            duration: 2000,
-          });
-        }}
-      />
     </div>
   );
 }
