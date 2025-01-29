@@ -137,120 +137,153 @@ export default function HomePage() {
       {/* Main Application Section */}
       <section className="py-12 bg-gray-50">
         <div className="container">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto space-y-6">
+            {/* Step 1: Chat Scenario Selection */}
             <SectionCard
-              icon={Upload}
-              title="上传并分析"
+              icon={MessageCircle}
+              title="步骤 1: 选择聊天场景"
               className="bg-white shadow-lg"
             >
-              <div className="space-y-8">
-                {/* Image Upload Section */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <Upload className="h-5 w-5 text-blue-500" />
-                    上传聊天截图
-                  </h3>
-                  <ImageUpload
-                    onUpload={async (file: File) => {
-                      setError(null);
-                      setIsAnalyzing(true);
-                      setParsedText('');
-                      setGeneratedReply('');
-
-                      try {
-                        const result = await analyzeImage(file, imagePrompt);
-                        setParsedText(result);
-                        setSessionId(crypto.randomUUID());
-                        
-                        // Save chat context
-                        await saveChatContext(sessionId, '', '');
-                        
-                        // Get and save background info
-                        const info = await getLatestBackgroundInfo();
-                        if (info) {
-                          setBackgroundInfo(info);
-                          await saveBackgroundInfo(info);
-                        }
-                      } catch (e) {
-                        setError(getErrorMessage(e));
-                      } finally {
-                        setIsAnalyzing(false);
-                      }
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {[
+                  { id: 'newyear', label: '拜年祝福', prompt: '这是一个拜年场景，需要礼貌热情的祝福语' },
+                  { id: 'work', label: '工作沟通', prompt: '这是一个工作沟通场景，需要专业简洁的回复' },
+                  { id: 'friend', label: '朋友聊天', prompt: '这是一个朋友聊天场景，需要轻松自然的对话' },
+                  { id: 'customer', label: '客户服务', prompt: '这是一个客户服务场景，需要耐心周到的回应' },
+                  { id: 'family', label: '家人互动', prompt: '这是一个家人互动场景，需要温暖亲切的交流' },
+                  { id: 'custom', label: '自定义场景', prompt: '请在背景信息中详细说明场景' },
+                ].map((scenario) => (
+                  <Button
+                    key={scenario.id}
+                    variant={backgroundInfo === scenario.prompt ? 'default' : 'outline'}
+                    className="h-auto py-4 px-4 flex flex-col gap-2"
+                    onClick={async () => {
+                      setBackgroundInfo(scenario.prompt);
+                      await saveBackgroundInfo(scenario.prompt);
+                      toast({
+                        title: `已选择${scenario.label}场景`,
+                        duration: 2000,
+                      });
                     }}
-                  />
-                </div>
+                  >
+                    <span className="text-sm font-medium">{scenario.label}</span>
+                  </Button>
+                ))}
+              </div>
+            </SectionCard>
+
+            {/* Step 2: Image Upload */}
+            <SectionCard
+              icon={Upload}
+              title="步骤 2: 上传聊天记录"
+              className="bg-white shadow-lg"
+            >
+              <div className="space-y-4">
+                <ImageUpload
+                  onUpload={async (file: File) => {
+                    setError(null);
+                    setIsAnalyzing(true);
+                    setParsedText('');
+                    setGeneratedReply('');
+
+                    try {
+                      const result = await analyzeImage(file, imagePrompt);
+                      setParsedText(result);
+                      setSessionId(crypto.randomUUID());
+                      
+                      // Save chat context
+                      await saveChatContext(sessionId, '', '');
+                      
+                      // Save background info if not already set
+                      if (backgroundInfo) {
+                        await saveBackgroundInfo(backgroundInfo);
+                      }
+                    } catch (e) {
+                      setError(getErrorMessage(e));
+                    } finally {
+                      setIsAnalyzing(false);
+                    }
+                  }}
+                />
 
                 {/* Analysis Results */}
                 {isAnalyzing ? (
                   <LoadingSkeleton />
                 ) : parsedText ? (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                      <MessageCircle className="h-5 w-5 text-blue-500" />
-                      对话分析结果
-                    </h3>
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-gray-700">识别结果预览</h3>
                     <div className="rounded-lg border bg-gray-50 p-4">
                       <pre className="whitespace-pre-wrap text-sm text-gray-700">{parsedText}</pre>
                     </div>
                   </div>
                 ) : null}
+              </div>
+            </SectionCard>
 
-                {/* Generated Reply */}
+            {/* Step 3: Generate Reply */}
+            <SectionCard
+              icon={Wand2}
+              title="步骤 3: 生成智能回复"
+              className="bg-white shadow-lg"
+            >
+              <div className="space-y-4">
                 {error ? (
                   <ErrorAlert error={error} />
                 ) : parsedText ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                        <Wand2 className="h-5 w-5 text-blue-500" />
-                        生成回复
-                      </h3>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                        onClick={() => {
-                          copyToClipboard(generatedReply);
-                          toast({
-                            title: '已复制到剪贴板',
-                            duration: 2000,
-                          });
-                        }}
-                      >
-                        <Copy className="h-4 w-4" />
-                        <span>复制</span>
-                      </Button>
-                    </div>
+                  <>
                     {isGenerating ? (
                       <LoadingSkeleton />
                     ) : (
-                      <Textarea
-                        value={generatedReply}
-                        onChange={(e) => setGeneratedReply(e.target.value)}
-                        className="h-32"
-                      />
+                      <div className="space-y-4">
+                        <Textarea
+                          value={generatedReply}
+                          onChange={(e) => setGeneratedReply(e.target.value)}
+                          className="h-32"
+                          placeholder="点击下方按钮生成回复..."
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            className="flex-1 bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600"
+                            disabled={isGenerating}
+                            onClick={async () => {
+                              if (!sessionId) return;
+                              setError(null);
+                              setIsGenerating(true);
+                              try {
+                                const reply = await generateReply(parsedText, sessionId, replyPrompt);
+                                setGeneratedReply(reply);
+                              } catch (e) {
+                                setError(getErrorMessage(e));
+                              } finally {
+                                setIsGenerating(false);
+                              }
+                            }}
+                          >
+                            {isGenerating ? '生成中...' : '生成回复'}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="gap-2"
+                            onClick={() => {
+                              copyToClipboard(generatedReply);
+                              toast({
+                                title: '已复制到剪贴板',
+                                duration: 2000,
+                              });
+                            }}
+                          >
+                            <Copy className="h-4 w-4" />
+                            <span>复制</span>
+                          </Button>
+                        </div>
+                      </div>
                     )}
-                    <Button
-                      className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600"
-                      disabled={isGenerating}
-                      onClick={async () => {
-                        if (!sessionId) return;
-                        setError(null);
-                        setIsGenerating(true);
-                        try {
-                          const reply = await generateReply(parsedText, sessionId, replyPrompt);
-                          setGeneratedReply(reply);
-                        } catch (e) {
-                          setError(getErrorMessage(e));
-                        } finally {
-                          setIsGenerating(false);
-                        }
-                      }}
-                    >
-                      {isGenerating ? '生成中...' : '生成回复'}
-                    </Button>
+                  </>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>请先完成步骤 1 和步骤 2</p>
                   </div>
-                ) : null}
+                )}
               </div>
             </SectionCard>
           </div>
