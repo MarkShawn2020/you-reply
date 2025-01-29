@@ -5,7 +5,7 @@ import Image from "next/image";
 
 export default function DonationSection() {
   return (
-    <section className="bg-gradient-to-b from-white to-gray-50 py-16">
+    <section id="sponsor" className="bg-gradient-to-b from-white to-gray-50 py-16">
       <div className="container px-4 md:px-6">
         <div className="mx-auto max-w-2xl text-center">
           <div className="inline-flex items-center justify-center rounded-lg bg-pink-50 px-3 py-1 text-sm text-pink-600 mb-6">

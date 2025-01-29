@@ -42,16 +42,16 @@ export default function RootLayout({
                     <MessageCircle className="h-5 w-5" />
                   </div>
                   <span className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-900 bg-clip-text text-transparent">
-                    微信智能回复
+                    微信回复助手
                   </span>
-                  <Badge variant={"secondary"}>CS 魔法社</Badge>
+                  <Badge variant={"secondary"}>AI 超级川</Badge>
                 </Link>
                 <nav className="hidden md:flex items-center space-x-6">
                   {!isAppPage ? (
                     <>
-                      <Link href="#features" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">功能特点</Link>
-                      <Link href="#how-it-works" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">使用方法</Link>
-                      <Link href="#pricing" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">价格方案</Link>
+                      <Link href="/#features" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">功能特点</Link>
+                      <Link href="/#pricing" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">价格方案</Link>
+                      <Link href="/#sponsor" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">友情赞助</Link>
                     </>
                   ) : null}
                 </nav>
@@ -64,7 +64,7 @@ export default function RootLayout({
                       <span>历史记录</span>
                     </Button>
                   </HistoryDrawer>
-                  
+
                 {!isAppPage && (
                   <Button size="sm" className="bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600" asChild>
                     <Link href="/app">开始使用</Link>
@@ -82,7 +82,7 @@ export default function RootLayout({
             <div className="container">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-gray-900">关于我们</h3>
+                  <h3 className="font-semibold text-gray-900">关于本产品</h3>
                   <p className="text-sm text-gray-600">微信回复助手致力于提供智能、专业的社交对话解决方案，让沟通更轻松自然。</p>
                 </div>
                 <div className="space-y-3">
@@ -90,27 +90,47 @@ export default function RootLayout({
                   <ul className="space-y-2 text-sm">
                     <li><Link href="#features" className="text-gray-600 hover:text-gray-900">功能特点</Link></li>
                     <li><Link href="#pricing" className="text-gray-600 hover:text-gray-900">价格方案</Link></li>
-                    <li><Link href="#faq" className="text-gray-600 hover:text-gray-900">常见问题</Link></li>
                   </ul>
                 </div>
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-gray-900">联系我们</h3>
+                  <h3 className="font-semibold text-gray-900">联系我</h3>
                   <ul className="space-y-2 text-sm">
                     <li><Link href="https://github.com/MarkShawn2020/you-reply/issues" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900">问题反馈</Link></li>
                     <li><Link href="https://github.com/MarkShawn2020/you-reply" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900">加入开发</Link></li>
                   </ul>
                 </div>
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-gray-900">关注我们</h3>
-                  <div className="flex space-x-4">
-                    <Link href="https://github.com/MarkShawn2020/you-reply" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900">
-                      <Github className="h-5 w-5" />
-                    </Link>
+                  <h3 className="font-semibold text-gray-900">关注我</h3>
+                  <div className="relative group">
+                    <button className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900">
+                      <MessageCircle className="h-4 w-4" />
+                      <span>@AI超级川</span>
+                    </button>
+                    <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block">
+                      <div className="bg-white p-4 rounded-lg shadow-lg border">
+                        <div className="w-[320px]">
+                          <img
+                            src="/images/wxmp.png"
+                            alt="AI超级川 公众号"
+                            className="object-cover rounded-lg"
+                            width={320}
+                            height={128}
+                          />
+                        </div>
+
+                      </div>
+                    </div>
+                    <div className="flex space-x-4 mt-4">
+                      <Link href="https://github.com/MarkShawn2020" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900 inline-flex gap-1 items-center">
+                        <Github className="h-5 w-5" />
+                        <span className='text-sm'>@MarkShawn2020</span>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
               <div className="mt-8 pt-8 border-t text-center text-sm text-gray-600">
-                <p> {new Date().getFullYear()} 微信回复助手. 保留所有权利.</p>
+                <p> {new Date().getFullYear()} 微信回复助手 @AI超级川. 保留所有权利.</p>
               </div>
             </div>
           </footer>

@@ -13,7 +13,7 @@ const pricingPlans = [
       "社区支持"
     ],
     buttonText: "开始使用",
-    href: "#upload",
+    href: "/app",
     popular: false
   },
   {
