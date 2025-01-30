@@ -255,9 +255,9 @@ export function ImageUpload({
       )}
 
       {selectedFile && (
-        <div className="flex gap-4">
+        <div className="flex flex-col lg:flex-row gap-4">
           {/* 左侧：预览图 */}
-          <div className="w-[400px] shrink-0">
+          <div className="w-full lg:w-[400px] lg:shrink-0">
             <div className="relative rounded-lg overflow-hidden">
               <Image
                 id="preview-image"
@@ -273,7 +273,7 @@ export function ImageUpload({
           {/* 右侧：解析结果 */}
           <div className="flex-1 space-y-4">
             <div className="space-y-2 h-full flex flex-col">
-              <div className="font-medium flex justify-between items-center">
+              <div className="font-medium flex flex-col sm:flex-row justify-between gap-2 sm:items-center">
                 <span>解析结果:</span>
                 <div className="space-x-2">
                   {isEditing ? (
@@ -281,6 +281,7 @@ export function ImageUpload({
                       <Button
                         variant="outline"
                         size="sm"
+                        className="w-full sm:w-auto"
                         onClick={() => {
                           setIsEditing(false);
                           setEditedResult(streamingResult);
@@ -290,6 +291,7 @@ export function ImageUpload({
                       </Button>
                       <Button
                         size="sm"
+                        className="w-full sm:w-auto"
                         onClick={() => {
                           setIsEditing(false);
                           setStreamingResult(editedResult);
@@ -304,6 +306,7 @@ export function ImageUpload({
                     <Button
                       variant="outline"
                       size="sm"
+                      className="w-full sm:w-auto"
                       onClick={() => setIsEditing(true)}
                     >
                       编辑
@@ -315,7 +318,7 @@ export function ImageUpload({
                 value={isEditing ? editedResult : streamingResult}
                 onChange={(e) => setEditedResult(e.target.value)}
                 readOnly={!isEditing}
-                className="flex-1 font-mono text-sm"
+                className="flex-1 font-mono text-sm min-h-[200px]"
               />
             </div>
           </div>
