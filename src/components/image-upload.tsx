@@ -36,8 +36,6 @@ export function ImageUpload({
   const [streamingResult, setStreamingResult] = useState<string>('');
   const [editedResult, setEditedResult] = useState<string>('');
   const [isEditing, setIsEditing] = useState(false);
-  const [retryCount, setRetryCount] = useState<number>(0);
-  const [maxRetries, setMaxRetries] = useState<number>(3);
   const [selectedFile, setSelectedFile] = useState<{ file: File; preview: string } | null>(null);
   const [ocrResults, setOcrResults] = useState<OCRResponse | null>(null);
 
@@ -121,11 +119,6 @@ export function ImageUpload({
     } catch (error) {
       console.error('Error processing image:', error);
       setError(error instanceof Error ? error.message : 'Failed to process image');
-      
-      if (retryCount < maxRetries) {
-        setRetryCount(prev => prev + 1);
-        await processImage(file);
-      }
     } finally {
       setIsAnalyzing(false);
     }
@@ -136,24 +129,23 @@ export function ImageUpload({
       if (files.length === 0) return;
       
       try {
-        const preview = await createAnnotatedPreview(files[0]!);
-        setSelectedFile({
-          file: files[0]!,
-          preview,
-        });
-        
-        const file = files[files.length - 1]!;
-        setIsAnalyzing(true);
+        const file = files[0]!;  // 只处理第一个文件
         await processImage(file);
       } catch (error) {
         console.error('Error handling files:', error);
         setError(error instanceof Error ? error.message : 'Failed to process files');
-      } finally {
-        setIsAnalyzing(false);
       }
     },
     [processImage],
   );
+
+  const handleRetry = useCallback(() => {
+    if (selectedFile) {
+      setError(null);
+      setStreamingResult('');
+      processImage(selectedFile.file).catch(console.error);
+    }
+  }, [selectedFile]);
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
@@ -169,23 +161,6 @@ export function ImageUpload({
     },
     disabled: isAnalyzing,
   });
-
-  const handleRetry = useCallback(() => {
-    if (selectedFile) {
-      setIsAnalyzing(true);
-      setError(null);
-      setStreamingResult('');
-      setRetryCount(retryCount + 1);
-      
-      processImage(selectedFile.file)
-        .catch(err => {
-          setError(err.message);
-        })
-        .finally(() => {
-          setIsAnalyzing(false);
-        });
-    }
-  }, [selectedFile, retryCount]);
 
   const removeImage = useCallback(
     (index: number) => {
@@ -256,21 +231,15 @@ export function ImageUpload({
         <div className="flex items-center gap-2 text-destructive">
           <AlertCircle className="w-4 h-4" />
           <div className="text-sm">{error}</div>
-          {retryCount < maxRetries && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-auto"
-              onClick={() => {
-                if (selectedFile) {
-                  processImage(selectedFile.file);
-                }
-              }}
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              重试
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto"
+            onClick={handleRetry}
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            重试
+          </Button>
         </div>
       )}
 
