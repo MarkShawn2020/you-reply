@@ -21,7 +21,7 @@ export function SectionCard({
   return (
     <Card className={cn('overflow-hidden', className)}>
       <div className="border-b bg-gray-50/50 px-6 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-col xs:flex-row gap-4">
           <div className="flex items-center gap-2">
             <Icon className="h-5 w-5 text-gray-500" />
             <h3 className="font-medium">{title}</h3>

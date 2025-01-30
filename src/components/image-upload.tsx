@@ -37,8 +37,6 @@ export function ImageUpload({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [streamingResult, setStreamingResult] = useState<string>('');
-  const [editedResult, setEditedResult] = useState<string>('');
-  const [isEditing, setIsEditing] = useState(false);
   const [selectedFile, setSelectedFile] = useState<{ file: File; preview: string } | null>(null);
   const [ocrResults, setOcrResults] = useState<OCRResponse | null>(null);
 
@@ -101,7 +99,6 @@ export function ImageUpload({
       
       const result = analyzeData.result;
       setStreamingResult(result);
-      setEditedResult(result);
       onStreamResult?.(result);
       onFinalResult?.(result);
     } catch (error) {
@@ -273,51 +270,15 @@ export function ImageUpload({
           {/* 右侧：解析结果 */}
           <div className="flex-1 space-y-4">
             <div className="space-y-2 h-full flex flex-col">
-              <div className="font-medium flex flex-col sm:flex-row justify-between gap-2 sm:items-center">
-                <span>解析结果:</span>
-                <div className="space-x-2">
-                  {isEditing ? (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full sm:w-auto"
-                        onClick={() => {
-                          setIsEditing(false);
-                          setEditedResult(streamingResult);
-                        }}
-                      >
-                        取消
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="w-full sm:w-auto"
-                        onClick={() => {
-                          setIsEditing(false);
-                          setStreamingResult(editedResult);
-                          onStreamResult?.(editedResult);
-                          onFinalResult?.(editedResult);
-                        }}
-                      >
-                        保存
-                      </Button>
-                    </>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full sm:w-auto"
-                      onClick={() => setIsEditing(true)}
-                    >
-                      编辑
-                    </Button>
-                  )}
-                </div>
-              </div>
+              <div className="font-medium">解析结果:</div>
               <Textarea
-                value={isEditing ? editedResult : streamingResult}
-                onChange={(e) => setEditedResult(e.target.value)}
-                readOnly={!isEditing}
+                value={streamingResult}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  setStreamingResult(newValue);
+                  onStreamResult?.(newValue);
+                  onFinalResult?.(newValue);
+                }}
                 className="flex-1 font-mono text-sm min-h-[200px]"
               />
             </div>
