@@ -9,6 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { OCRResponse, groupTextsByPosition } from '@/services/ocr';
 import { createAnnotatedPreview } from '@/lib/image-utils';
+import { createLogger } from '@/lib/client-logger';
+
+const logger = createLogger('ImageUpload');
 
 interface ImageUploadProps {
   /** User ID for tracking */
@@ -38,21 +41,6 @@ export function ImageUpload({
   const [isEditing, setIsEditing] = useState(false);
   const [selectedFile, setSelectedFile] = useState<{ file: File; preview: string } | null>(null);
   const [ocrResults, setOcrResults] = useState<OCRResponse | null>(null);
-
-  const drawOCRBoxes = useCallback((canvas: HTMLCanvasElement, results: OCRResponse['words_result']) => {
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    // 设置样式
-    ctx.strokeStyle = 'red';
-    ctx.lineWidth = 2;
-    
-    // 绘制矩形框
-    results.forEach(result => {
-      const { left, top, width, height } = result.location;
-      ctx.strokeRect(left, top, width, height);
-    });
-  }, []);
 
   const processImage = async (file: File) => {
     try {
@@ -140,6 +128,7 @@ export function ImageUpload({
   );
 
   const handleRetry = useCallback(() => {
+    logger.debug('Retrying image upload');
     if (selectedFile) {
       setError(null);
       setStreamingResult('');
@@ -147,12 +136,37 @@ export function ImageUpload({
     }
   }, [selectedFile]);
 
-  const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
-      handleFiles(acceptedFiles);
+  const handleRemove = useCallback(
+    (index: number) => {
+      const imageToRemove = images[index]!;
+      URL.revokeObjectURL(imageToRemove.preview);
+      setImages((prev) => prev.filter((_, i) => i !== index));
     },
-    [handleFiles],
+    [images],
   );
+
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    logger.debug('Files dropped', { count: acceptedFiles.length });
+    
+    if (acceptedFiles.length === 0) {
+      logger.warn('No files were accepted');
+      return;
+    }
+
+    const file = acceptedFiles[0]!;
+    logger.info('Processing file', { 
+      name: file.name, 
+      size: file.size, 
+      type: file.type 
+    });
+
+    try {
+      await handleFiles([file]);
+    } catch (error) {
+      logger.error('Error processing file', { error });
+      setError(error instanceof Error ? error.message : 'Failed to process file');
+    }
+  }, [handleFiles]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -162,14 +176,11 @@ export function ImageUpload({
     disabled: isAnalyzing,
   });
 
-  const removeImage = useCallback(
-    (index: number) => {
-      const imageToRemove = images[index]!;
-      URL.revokeObjectURL(imageToRemove.preview);
-      setImages((prev) => prev.filter((_, i) => i !== index));
-    },
-    [images],
-  );
+  useEffect(() => {
+    if (error) {
+      logger.error('Image upload error', { error });
+    }
+  }, [error]);
 
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {

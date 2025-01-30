@@ -1,4 +1,9 @@
+
+
+import { createLogger } from "~/lib/logger";
 import { OCRResponse } from "./ocr";
+
+const logger = createLogger("Analysis")
 
 interface AnalysisResult {
   type: "me" | "other" | "time" | "unknown";
@@ -12,11 +17,11 @@ export function analyzeTextPosition(
   text: string,
   left: number,
 ): AnalysisResult["type"] {
-  console.log(`Analyzing position for text: "${text}" at left: ${left}`);
+  logger.debug(`Analyzing position for text: "${text}" at left: ${left}`);
 
   // 处理撤回消息
   if (text.includes("recalled a message")) {
-    console.log("-> Detected recall message");
+    logger.debug("-> Detected recall message");
     return "unknown";
   }
 
@@ -26,19 +31,19 @@ export function analyzeTextPosition(
     text.match(/^\d{4}-\d{2}-\d{2}/) ||
     text.match(/^\w+\s*\d+,?\s*\d{4}\s*\d{1,2}:\d{2}/)
   ) {
-    console.log("-> Detected time format");
+    logger.debug("-> Detected time format");
     return "time";
   }
 
   if (left > 500) {
-    console.log("-> Detected as my message");
+    logger.debug("-> Detected as my message");
     return "me";
   }
   if (left < 500) {
-    console.log("-> Detected as other message");
+    logger.debug("-> Detected as other message");
     return "other";
   }
-  console.log("-> Unknown message type");
+  logger.debug("-> Unknown message type");
   return "unknown";
 }
 
@@ -46,13 +51,13 @@ export function analyzeTextPosition(
  * 格式化时间字符串
  */
 function formatTimeString(text: string): string {
-  console.log(`Formatting time string: "${text}"`);
+  logger.debug(`Formatting time string: "${text}"`);
   // 处理特殊格式，如 "0ct23,202416:17"
   const match = text.match(/(\w+)\s*(\d+),?\s*(\d{4})\s*(\d{1,2}):(\d{2})/);
   if (match) {
     const [_, month, day, year, hour, minute] = match;
     const formatted = `${year}-${month}-${day} ${hour}:${minute}`;
-    console.log(`-> Formatted to: "${formatted}"`);
+    logger.debug(`-> Formatted to: "${formatted}"`);
     return formatted;
   }
   return text;
@@ -63,10 +68,10 @@ function formatTimeString(text: string): string {
  */
 export function analyzeOCRResult(ocrResult: OCRResponse): string {
   try {
-    console.log("Analyzing OCR result:", JSON.stringify(ocrResult, null, 2));
+    logger.debug("Analyzing OCR result:", JSON.stringify(ocrResult, null, 2));
 
     if (!ocrResult?.words_result?.length) {
-      console.log("No words_result found or empty");
+      logger.debug("No words_result found or empty");
       return "未检测到有效文本";
     }
 
@@ -74,20 +79,20 @@ export function analyzeOCRResult(ocrResult: OCRResponse): string {
     const sortedResults = [...ocrResult.words_result]
       .filter((item) => {
         if (!item?.words || !item?.location) {
-          console.log("Filtering out invalid item:", item);
+          logger.debug("Filtering out invalid item:", item);
           return false;
         }
         return true;
       })
       .sort((a, b) => {
-        console.log(
+        logger.debug(
           `Comparing top positions: ${a.location.top} vs ${b.location.top}`,
         );
         return a.location.top - b.location.top;
       })
       .map((item) => {
         const type = analyzeTextPosition(item.words, item.location.left);
-        console.log(`Mapped item: "${item.words}" -> type: ${type}`);
+        logger.debug(`Mapped item: "${item.words}" -> type: ${type}`);
         return {
           type,
           text: item.words.trim(),
@@ -95,10 +100,10 @@ export function analyzeOCRResult(ocrResult: OCRResponse): string {
       })
       .filter((item) => item.text);
 
-    console.log("Processed results:", sortedResults);
+    logger.debug("Processed results:", sortedResults);
 
     if (sortedResults.length === 0) {
-      console.log("No valid results after processing");
+      logger.debug("No valid results after processing");
       return "未检测到有效文本";
     }
 
@@ -107,7 +112,7 @@ export function analyzeOCRResult(ocrResult: OCRResponse): string {
     let currentType: AnalysisResult["type"] | null = null;
 
     for (const item of sortedResults) {
-      console.log(`Processing item: ${JSON.stringify(item)}`);
+      logger.debug(`Processing item: ${JSON.stringify(item)}`);
 
       if (item.type === "time") {
         const formattedTime = formatTimeString(item.text);
@@ -117,7 +122,7 @@ export function analyzeOCRResult(ocrResult: OCRResponse): string {
       }
 
       if (item.type === "unknown") {
-        console.log(`Skipping unknown type: ${item.text}`);
+        logger.debug(`Skipping unknown type: ${item.text}`);
         continue;
       }
 
@@ -129,10 +134,10 @@ export function analyzeOCRResult(ocrResult: OCRResponse): string {
       result += item.text + "\n";
     }
 
-    console.log("Final result:", result);
+    logger.debug("Final result:", result);
     return result || "解析结果为空";
   } catch (error) {
-    console.error("Error analyzing OCR result:", error);
+    logger.error("Error analyzing OCR result:", error);
     throw new Error("解析失败，请重试");
   }
 }

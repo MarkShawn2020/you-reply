@@ -56,7 +56,7 @@ export async function createAnnotatedPreview(
   if (ocrResults?.words_result) {
     // 设置样式
     ctx.strokeStyle = 'red';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1;
     
     ocrResults.words_result.forEach(result => {
       const { left, top, width, height } = result.location;

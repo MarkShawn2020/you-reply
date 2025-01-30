@@ -1,3 +1,7 @@
+'use server'
+
+import { createLogger } from "~/lib/logger";
+
 export interface OCRTextLocation {
   left: number;
   top: number;
@@ -22,8 +26,10 @@ export interface GroupedText {
   group: number;
 }
 
+const logger = createLogger("OCR")
+
 export async function processImageWithOCR(file: File): Promise<GroupedText[]> {
-  console.log("[OCR Client] Processing image:", {
+  logger.info("[OCR Client] Processing image:", {
     filename: file.name,
     type: file.type,
     size: `${(file.size / 1024).toFixed(2)}KB`,
@@ -32,7 +38,7 @@ export async function processImageWithOCR(file: File): Promise<GroupedText[]> {
   const formData = new FormData();
   formData.append("image", file);
 
-  console.log("[OCR Client] Sending request to OCR API");
+  logger.debug("[OCR Client] Sending request to OCR API");
   const response = await fetch("/api/ocr", {
     method: "POST",
     body: formData,
@@ -40,18 +46,18 @@ export async function processImageWithOCR(file: File): Promise<GroupedText[]> {
 
   if (!response.ok) {
     const error = await response.json();
-    console.error("[OCR Client] API request failed:", error);
+    logger.error("[OCR Client] API request failed:", error);
     throw new Error(error.error || "Failed to process image");
   }
 
   const data: OCRResponse = await response.json();
-  console.log("[OCR Client] Received OCR response:", {
+  logger.debug("[OCR Client] Received OCR response:", {
     words_count: data.words_result_num,
     log_id: data.log_id,
   });
 
   const groupedTexts = groupTextsByPosition(data.words_result);
-  console.log("[OCR Client] Grouped texts:", {
+  logger.debug("[OCR Client] Grouped texts:", {
     total_groups: Math.max(...groupedTexts.map((t) => t.group), 0),
     total_texts: groupedTexts.length,
   });
@@ -60,11 +66,7 @@ export async function processImageWithOCR(file: File): Promise<GroupedText[]> {
 }
 
 export function groupTextsByPosition(results: OCRTextResult[]): GroupedText[] {
-  console.log(
-    "[OCR Client] Starting text grouping with",
-    results.length,
-    "items",
-  );
+  logger.debug(`[OCR Client] Starting text grouping with ${results.length} items`);
 
   // 按垂直位置排序
   const sortedResults = [...results].sort(
@@ -82,11 +84,8 @@ export function groupTextsByPosition(results: OCRTextResult[]): GroupedText[] {
       Math.abs(result.location.top - lastTop) > VERTICAL_THRESHOLD
     ) {
       currentGroup++;
-      console.log(
-        "[OCR Client] Created new group",
-        currentGroup,
-        "at position",
-        result.location.top,
+      logger.debug(
+        `[OCR Client] Created new group ${currentGroup} at position ${result.location.top}`,
       );
     }
 
@@ -98,7 +97,7 @@ export function groupTextsByPosition(results: OCRTextResult[]): GroupedText[] {
     lastTop = result.location.top;
   });
 
-  console.log("[OCR Client] Finished grouping:", {
+  logger.debug(`[OCR Client] Finished grouping:`, {
     input_count: results.length,
     output_count: groups.length,
     total_groups: currentGroup,
