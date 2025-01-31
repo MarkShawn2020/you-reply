@@ -148,7 +148,7 @@ export default function AppPage() {
               title="Step 2. 生成智能回复"
               className="bg-white shadow-lg"
             >
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-2">
                 <DeepseekChat prompt={genReplyPrompt} />
                 <ClaudeChat prompt={genReplyPrompt} />
               </div>
